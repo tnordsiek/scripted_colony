@@ -8,8 +8,8 @@ Vorgehensregel: pro Arbeitspaket erst Modul, dann Tests gruen, dann diese Datei 
 
 | # | Paket | Status |
 |---|---|---|
-| 1 | Projektgrundlage (Vite/React/TS/Vitest) | in Arbeit |
-| 2 | Datenmodell (types.ts, constants.ts) | offen |
+| 1 | Projektgrundlage (Vite/React/TS/Vitest) | fertig |
+| 2 | Datenmodell (types.ts, constants.ts, rng.ts, ids.ts) | fertig |
 | 3 | Map-Generierung (seeded RNG, Fairness, Referenzwerte) | offen |
 | 4 | Sicht/Fog | offen |
 | 5 | Tick-System (Pipeline, Pause/Speed, Eventlog) | offen |
@@ -27,7 +27,7 @@ Vorgehensregel: pro Arbeitspaket erst Modul, dann Tests gruen, dann diese Datei 
 
 ## Naechster Schritt
 
-Paket 1: package.json, vite.config.ts, tsconfig.json, index.html, src/main.tsx, src/App.tsx anlegen; npm install; Erst-Commit.
+Paket 3: src/sim/map.ts + src/sim/pathfinding.ts nach docs/03-technical/pathfinding-and-map-generation.md; Referenzabnahme MVP_DEFAULT_IRON_ORE_FIELDS + Signatur 40375871 (Tests MVP-V98, MVP-MAP).
 
 ## Offene Punkte / Abweichungen
 
