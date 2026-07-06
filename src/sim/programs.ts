@@ -545,6 +545,8 @@ export type CanExecuteAction = (
   state: GameState,
   robot: Robot,
   action: ProgramAction,
+  rowId?: string,
+  programId?: string,
 ) => ActionExecutabilityResult;
 
 export function evaluateProgramStack(
@@ -584,7 +586,7 @@ export function evaluateProgramStack(
         continue;
       }
 
-      const executability = canExecuteAction(state, robot, row.then);
+      const executability = canExecuteAction(state, robot, row.then, row.id, program.id);
       if (executability.type === "notExecutable") {
         traces.push({
           programId: program.id,

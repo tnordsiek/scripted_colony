@@ -10,15 +10,15 @@ Vorgehensregel: pro Arbeitspaket erst Modul, dann Tests gruen, dann diese Datei 
 |---|---|---|
 | 1 | Projektgrundlage (Vite/React/TS/Vitest) | fertig |
 | 2 | Datenmodell (types.ts, constants.ts, rng.ts, ids.ts) | fertig |
-| 3 | Map-Generierung (seeded RNG, Fairness, Referenzwerte) | offen |
-| 4 | Sicht/Fog | offen |
-| 5 | Tick-System (Pipeline, Pause/Speed, Eventlog) | offen |
-| 6 | Bewegung & Pfadfindung | offen |
-| 7 | Programmstack (Templates, Auswertung, updateProgram) | offen |
-| 8 | Energie (Stasis, Power-Pool) | offen |
-| 9 | Mining | offen |
-| 10 | Bau | offen |
-| 11 | Produktion & Spawn | offen |
+| 3 | Map-Generierung (seeded RNG, Fairness, Referenzwerte) | fertig |
+| 4 | Sicht/Fog | fertig |
+| 5 | Tick-System (Pipeline, Pause/Speed, Eventlog) | fertig |
+| 6 | Bewegung & Pfadfindung | fertig |
+| 7 | Programmstack (Templates, Auswertung, updateProgram) | fertig |
+| 8 | Energie (Stasis, Power-Pool) | fertig |
+| 9 | Mining | fertig |
+| 10 | Bau | fertig |
+| 11 | Produktion & Spawn | fertig |
 | 12 | Canvas-Rendering | offen |
 | 13 | UI-MVP (Panels, Editor, Steuerleiste) | offen |
 | 14 | Tests (alle P0 gruen) | offen |
@@ -27,7 +27,13 @@ Vorgehensregel: pro Arbeitspaket erst Modul, dann Tests gruen, dann diese Datei 
 
 ## Naechster Schritt
 
-Paket 3: src/sim/map.ts + src/sim/pathfinding.ts nach docs/03-technical/pathfinding-and-map-generation.md; Referenzabnahme MVP_DEFAULT_IRON_ORE_FIELDS + Signatur 40375871 (Tests MVP-V98, MVP-MAP).
+Paket 12+13: Canvas-Rendering (MapCanvas mit Fallbacks) und UI-MVP (Panels, Editor, Steuerleiste) in src/ui/ nach docs/04-systems/ui-components-contract.md.
+
+## Zwischenstand Simulation
+
+Der komplette Sim-Kern ist funktionsfaehig: End-to-End-Test spielt einen ganzen Run
+(Erkunden -> Mining -> Solar Collector -> Roboterfabrik -> Produktion -> Iron-Miner-Spawn
+-> goal.mvpReached) deterministisch durch. 107 Tests gruen (npm test -- --run).
 
 ## Offene Punkte / Abweichungen
 
