@@ -14,6 +14,7 @@
 - Testmatrix um EXP1-Serie erweitert (RES, STEEL, ESTOR, BUILD, TPL, GOAL, E2E, DOC).
 - v110-Berichtsdateien nach `docs/archive/` verschoben; README, AGENTS, MANIFEST, Guideline auf v111.
 - Keine MVP-Regel geaendert (Siegbedingung, Score, Batterie, Bewegung, Mining, Bau, Produktion, Startzustand unveraendert; additiv: GameState.research startet leer).
+- Nachtrag (waehrend der Implementierung ergaenzt): Bauplatzwahl-Regeln praezisiert in `pathfinding-and-map-generation.md` — Einschluss-Schutz (kein Baufeld, das den bauenden Roboter einmauert) und Commitment-Regel (reserviertes gueltiges Baufeld wird beibehalten, verhindert Ziel-Pendeln); `expansion-1-scope.md` — addProgramFromTemplate fuegt ueber dem Erkundungsprogramm ein (Bau vor Erkundung, verhindert Livelock). Zusaetzlich kanonisch ergaenzt: ConditionValue resourceAmount, Building.storedEnergy/steelProductionTask, ResearchState.activeProjectSelectedTick, ActiveBuildableType, Verbraucher-Reihenfolge im Energie-Tick.
 
 ## v110 - Konsistenzkorrekturen nach inhaltlicher Pruefung umgesetzt
 

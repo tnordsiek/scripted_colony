@@ -256,6 +256,153 @@ export const MVP_PROGRAM_TEMPLATES: ProgramTemplateDefinition[] = [
       },
     ],
   },
+  {
+    id: "template.buildAiResearchCenter",
+    name: "Forschungszentrum bauen",
+    description: "Baut das KI-Forschungszentrum (Expansion 1).",
+    defaultEnabled: true,
+    defaultStackPosition: 6,
+    rows: [
+      {
+        id: "row.starter.buildAiResearchCenter.main",
+        if: {
+          type: "group",
+          operator: "OR",
+          conditions: [
+            buildingExists({ buildingType: "aiResearchCenter", status: "construction" }),
+            {
+              type: "group",
+              operator: "AND",
+              conditions: [
+                {
+                  type: "sensor",
+                  sensorId: "sensor.cargoResourceAmount",
+                  operator: "gte",
+                  value: {
+                    type: "resourceAmount",
+                    value: { resourceType: "ironOre", amount: 10 },
+                  },
+                },
+                {
+                  type: "not",
+                  condition: buildingExists({ buildingType: "aiResearchCenter" }),
+                },
+              ],
+            },
+          ],
+        },
+        then: {
+          actionId: "action.buildBuilding",
+          parameters: { buildingType: "aiResearchCenter" },
+        },
+        stop: {
+          operator: "OR",
+          conditions: [
+            buildingExists({ buildingType: "aiResearchCenter", status: "active" }),
+            ROBOT_STATUS_STASIS_CONDITION,
+          ],
+        },
+      },
+    ],
+  },
+  {
+    id: "template.buildSteelworks",
+    name: "Stahlwerk bauen",
+    description: "Baut das Stahlwerk (Expansion 1, nach Metallverarbeitung I).",
+    defaultEnabled: true,
+    defaultStackPosition: 7,
+    rows: [
+      {
+        id: "row.starter.buildSteelworks.main",
+        if: {
+          type: "group",
+          operator: "OR",
+          conditions: [
+            buildingExists({ buildingType: "steelworks", status: "construction" }),
+            {
+              type: "group",
+              operator: "AND",
+              conditions: [
+                {
+                  type: "sensor",
+                  sensorId: "sensor.cargoResourceAmount",
+                  operator: "gte",
+                  value: {
+                    type: "resourceAmount",
+                    value: { resourceType: "ironOre", amount: 8 },
+                  },
+                },
+                {
+                  type: "not",
+                  condition: buildingExists({ buildingType: "steelworks" }),
+                },
+              ],
+            },
+          ],
+        },
+        then: {
+          actionId: "action.buildBuilding",
+          parameters: { buildingType: "steelworks" },
+        },
+        stop: {
+          operator: "OR",
+          conditions: [
+            buildingExists({ buildingType: "steelworks", status: "active" }),
+            ROBOT_STATUS_STASIS_CONDITION,
+          ],
+        },
+      },
+    ],
+  },
+  {
+    id: "template.buildEnergyStorage",
+    name: "Energiespeicher bauen",
+    description: "Baut den Energiespeicher (Expansion 1, nach Energiepuffer I).",
+    defaultEnabled: true,
+    defaultStackPosition: 8,
+    rows: [
+      {
+        id: "row.starter.buildEnergyStorage.main",
+        if: {
+          type: "group",
+          operator: "OR",
+          conditions: [
+            buildingExists({ buildingType: "energyStorage", status: "construction" }),
+            {
+              type: "group",
+              operator: "AND",
+              conditions: [
+                {
+                  type: "sensor",
+                  sensorId: "sensor.cargoResourceAmount",
+                  operator: "gte",
+                  value: {
+                    type: "resourceAmount",
+                    value: { resourceType: "steelPlates", amount: 4 },
+                  },
+                },
+                {
+                  type: "not",
+                  condition: buildingExists({ buildingType: "energyStorage" }),
+                },
+              ],
+            },
+          ],
+        },
+        then: {
+          actionId: "action.buildBuilding",
+          parameters: { buildingType: "energyStorage" },
+        },
+        stop: {
+          operator: "OR",
+          conditions: [
+            buildingExists({ buildingType: "energyStorage", status: "active" }),
+            ROBOT_STATUS_STASIS_CONDITION,
+          ],
+        },
+      },
+    ],
+  },
 ];
 
 const STARTER_INSTANCE_IDS: Record<ProgramTemplateId, string> = {
@@ -265,6 +412,9 @@ const STARTER_INSTANCE_IDS: Record<ProgramTemplateId, string> = {
   "template.exploreNearby": "program.starter.exploreNearby",
   "template.stasisCharge": "program.starter.stasisCharge",
   "template.secureEnergy": "program.starter.secureEnergy",
+  "template.buildAiResearchCenter": "program.starter.buildAiResearchCenter",
+  "template.buildSteelworks": "program.starter.buildSteelworks",
+  "template.buildEnergyStorage": "program.starter.buildEnergyStorage",
 };
 
 export function getProgramTemplate(
@@ -424,7 +574,12 @@ function evaluateSensorCondition(
       return compareNumeric(operator, fillPercent, compareTo);
     }
     case "sensor.cargoResourceAmount": {
-      // MVP: aktive Ressource ist Iron Ore.
+      // number/percentage: Rueckwaertskompatibel Iron Ore;
+      // resourceAmount (Expansion 1): konkrete Ressource mit Schwellwert.
+      if (value.type === "resourceAmount") {
+        const amount = robot.cargo.used[value.value.resourceType] ?? 0;
+        return compareNumeric(operator, amount, value.value.amount);
+      }
       const amount = robot.cargo.used.ironOre ?? 0;
       const compareTo = value.type === "number" || value.type === "percentage" ? value.value : 0;
       return compareNumeric(operator, amount, compareTo);

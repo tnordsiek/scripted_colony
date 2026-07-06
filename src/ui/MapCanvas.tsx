@@ -94,7 +94,13 @@ export function MapCanvas({ state, sendCommand }: MapCanvasProps) {
       const assetKey =
         building.type === "solarCollector"
           ? "building.solarCollector"
-          : "building.robotFactory";
+          : building.type === "robotFactory"
+            ? "building.robotFactory"
+            : building.type === "aiResearchCenter"
+              ? "building.aiResearchCenter"
+              : building.type === "steelworks"
+                ? "building.steelworks"
+                : "building.energyStorage";
       const color = resolveAsset(assetKey).source ?? "#888";
       ctx.fillStyle = color;
       const inset = TILE * 0.12;
@@ -108,8 +114,15 @@ export function MapCanvas({ state, sendCommand }: MapCanvasProps) {
       ctx.font = "bold 16px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+      const letters: Record<string, string> = {
+        solarCollector: "S",
+        robotFactory: "F",
+        aiResearchCenter: "Z",
+        steelworks: "W",
+        energyStorage: "E",
+      };
       ctx.fillText(
-        building.type === "solarCollector" ? "S" : "F",
+        letters[building.type] ?? "?",
         building.x * TILE + TILE / 2,
         building.y * TILE + TILE / 2,
       );

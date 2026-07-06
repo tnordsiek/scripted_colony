@@ -71,6 +71,11 @@ export function createInitialGame(seed = "mvp-default"): GameState {
     eventLog: [createInitialLandingEvent()],
     score: createInitialScore(),
     mvpGoalReached: false,
+    research: {
+      activeProjectId: undefined,
+      progress: {},
+      completedProjects: [],
+    },
     materialRequests: [],
   };
 }

@@ -264,6 +264,10 @@ export type Building = {
 
   inventory?: BuildingInventory;
   productionTask?: ProductionTask;
+
+  // Expansion 1:
+  steelProductionTask?: SteelProductionTask;
+  storedEnergy?: number; // nur energyStorage, 0..Kapazitaet
 };
 
 // ---------------------------------------------------------------------------
@@ -276,7 +280,11 @@ export type ProgramTemplateId =
   | "template.mineIronOre"
   | "template.buildSolarCollector"
   | "template.buildRobotFactory"
-  | "template.stasisCharge";
+  | "template.stasisCharge"
+  // Expansion 1 (docs/02-mvp/expansion-1-scope.md):
+  | "template.buildAiResearchCenter"
+  | "template.buildSteelworks"
+  | "template.buildEnergyStorage";
 
 export type ProgramExecutionLimit =
   | { type: "unlimited" }
@@ -433,7 +441,9 @@ export type ConditionValue =
   | { type: "buildingStatus"; value: BuildingStatus }
   | { type: "buildingQuery"; value: BuildingQuery }
   | { type: "robotStatus"; value: RobotStatus }
-  | { type: "power"; value: number };
+  | { type: "power"; value: number }
+  // Expansion 1: Cargo-Menge einer konkreten Ressource (sensor.cargoResourceAmount)
+  | { type: "resourceAmount"; value: { resourceType: ResourceType; amount: number } };
 
 export type FieldTypeQuery =
   | "ironOre"
@@ -675,11 +685,19 @@ export type MiningTask = BaseRobotTask & {
   batteryCostOnSuccess: number;
 };
 
+export type ActiveBuildableType =
+  | "solarCollector"
+  | "robotFactory"
+  // Expansion 1:
+  | "aiResearchCenter"
+  | "steelworks"
+  | "energyStorage";
+
 export type BuildingTask = BaseRobotTask & {
   type: "building";
   mode: BuildingTaskMode;
   buildingId: BuildingId;
-  buildingType: "solarCollector" | "robotFactory";
+  buildingType: ActiveBuildableType;
   site: FieldCoord;
   buildFrom: FieldCoord;
   totalTicks: number;
@@ -732,6 +750,76 @@ export type ProductionTask = {
   createdTick: Tick;
   startedTick: Tick;
   completedTick?: Tick;
+};
+
+// ---------------------------------------------------------------------------
+// Forschung (Typen kanonisch; Expansion 1 aktiviert vier Projekte)
+// ---------------------------------------------------------------------------
+
+export type ResearchBranch =
+  | "infrastructure"
+  | "energy"
+  | "industry"
+  | "resourceExtraction"
+  | "units"
+  | "communication"
+  | "programDesign"
+  | "combatDefense";
+
+export type ResearchTier = 1 | 2 | 3 | 4;
+
+export type ResearchProjectId =
+  | "research.basicAutomation1"
+  | "research.metalProcessing1"
+  | "research.construction1"
+  | "research.energyDistribution1"
+  | "research.communication1"
+  | "research.groundScout1"
+  | "research.gasExtraction1"
+  | "research.siliconDetection1"
+  | "research.industrialManufacturing1"
+  | "research.transportLogistics1"
+  | "research.programDesign2"
+  | "research.energyBuffer1"
+  | "research.siliconMining1"
+  | "research.flightMechanics1"
+  | "research.meleeCombat1"
+  | "research.defenseRoutines1"
+  | "research.programDesign3"
+  | "research.communication2"
+  | "research.autonomyModules1"
+  | "research.advancedEnergy1"
+  | "research.rangedCombat1"
+  | "research.fleetCoordination1";
+
+// ---------------------------------------------------------------------------
+// Expansion 1: Stahlwerk-Verarbeitung und Forschung
+// ---------------------------------------------------------------------------
+
+export type SteelProductionStatus = "inProgress" | "outputBlocked";
+
+export type SteelProductionBlockedReason = "insufficientPower" | "cargoFull";
+
+export type SteelProductionTask = {
+  id: string;
+  buildingId: BuildingId;
+  cost: ResourceCost; // { ironOre: 2 }
+  costPaid: boolean;
+  totalTicks: number;
+  remainingTicks: number;
+  powerRequired: number;
+  status: SteelProductionStatus;
+  blockedReason?: SteelProductionBlockedReason;
+  createdTick: Tick;
+  startedTick: Tick;
+  completedTick?: Tick;
+};
+
+export type ResearchState = {
+  activeProjectId?: ResearchProjectId;
+  activeProjectSelectedTick?: Tick;
+  progress: Partial<Record<ResearchProjectId, number>>;
+  completedProjects: ResearchProjectId[];
 };
 
 // ---------------------------------------------------------------------------
@@ -857,6 +945,14 @@ export type GameEventCode =
   | "production.ironMiner.spawnBlocked"
   | "production.ironMiner.spawned"
   | "goal.mvpReached"
+  | "research.projectSelected"
+  | "research.paused.insufficientPower"
+  | "research.completed"
+  | "production.steelPlates.started"
+  | "production.steelPlates.blocked.notEnoughOre"
+  | "production.steelPlates.paused.insufficientPower"
+  | "production.steelPlates.outputBlocked"
+  | "production.steelPlates.completed"
   | "debug.command.rejected"
   | "debug.canExecuteAction.result"
   | "debug.build.targetRejected"
@@ -946,7 +1042,12 @@ export type PlayerCommand =
   | { type: "updateProgram"; robotId: RobotId; program: ProgramInstance }
   | { type: "resetProgramToTemplate"; robotId: RobotId; programId: ProgramInstanceId }
   | { type: "startIronMinerProduction"; buildingId: BuildingId }
-  | { type: "resetRun"; seed?: string };
+  | { type: "resetRun"; seed?: string }
+  // Expansion 1:
+  | { type: "selectResearchProject"; projectId: ResearchProjectId }
+  | { type: "startSteelProduction"; buildingId: BuildingId }
+  | { type: "addProgramFromTemplate"; robotId: RobotId; templateId: ProgramTemplateId }
+  | { type: "removeProgram"; robotId: RobotId; programId: ProgramInstanceId };
 
 export type CommandResult =
   | { type: "accepted" }
@@ -979,7 +1080,16 @@ export type CommandRejectionReason =
   | "productionAlreadyRunning"
   | "starterRobotMissing"
   | "starterRobotNotConnected"
-  | "notEnoughIronOreInStarterCargo";
+  | "notEnoughIronOreInStarterCargo"
+  // Expansion 1: Forschung, Stahlwerk, Template-Bibliothek
+  | "researchCenterMissing"
+  | "unknownResearchProject"
+  | "researchPrerequisiteMissing"
+  | "researchProjectAlreadyCompleted"
+  | "buildingIsNotSteelworks"
+  | "steelProductionAlreadyRunning"
+  | "templateNotUnlocked"
+  | "duplicateProgram";
 
 // ---------------------------------------------------------------------------
 // GameState
@@ -997,6 +1107,9 @@ export type GameState = {
   eventLog: GameEvent[];
   score: ScoreState;
   mvpGoalReached: boolean;
+
+  // Expansion 1:
+  research: ResearchState;
 
   // Future-prepared, inactive in MVP:
   materialRequests: MaterialRequest[];
@@ -1016,6 +1129,9 @@ export type AssetKey =
   | "robot.ironMiner"
   | "building.solarCollector"
   | "building.robotFactory"
+  | "building.aiResearchCenter"
+  | "building.steelworks"
+  | "building.energyStorage"
   | "building.construction"
   | "ui.selection"
   | "ui.reservation"

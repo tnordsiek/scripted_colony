@@ -131,9 +131,31 @@ function parameterValueEquals(
   return normalize(a) === normalize(b);
 }
 
+export type UpdateProgramOptions = {
+  // Expansion 1: nach research.basicAutomation1 duerfen Ausfuehrungslimits
+  // der Bau-Templates editiert werden.
+  allowExecutionLimitEdit?: boolean;
+};
+
+function isValidExecutionLimit(limit: ProgramInstance["executionLimit"]): boolean {
+  if (limit === undefined) {
+    return true;
+  }
+  if (limit.type === "unlimited" || limit.type === "once") {
+    return true;
+  }
+  return (
+    limit.type === "count" &&
+    Number.isInteger(limit.maxExecutions) &&
+    limit.maxExecutions >= 1 &&
+    limit.maxExecutions <= 99
+  );
+}
+
 export function validateUpdateProgram(
   existing: ProgramInstance,
   draft: ProgramInstance,
+  options: UpdateProgramOptions = {},
 ): CommandRejectionReason | null {
   const policy = MVP_PROGRAM_EDIT_POLICIES.find(
     (entry) => entry.templateId === existing.templateId,
@@ -145,6 +167,18 @@ export function validateUpdateProgram(
 
   if (draft.id !== existing.id || draft.templateId !== existing.templateId) {
     return "invalidProgramDefinition";
+  }
+
+  const limitChanged =
+    JSON.stringify(draft.executionLimit ?? null) !==
+    JSON.stringify(existing.executionLimit ?? null);
+  if (limitChanged) {
+    if (!options.allowExecutionLimitEdit) {
+      return "invalidProgramDefinition";
+    }
+    if (!isValidExecutionLimit(draft.executionLimit)) {
+      return "invalidProgramDefinition";
+    }
   }
 
   if (draft.rows.length !== existing.rows.length) {

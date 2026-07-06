@@ -90,6 +90,18 @@ export function ProgramCard({
         >
           Reset
         </button>
+        <button
+          disabled={locked}
+          onClick={() =>
+            sendCommand({
+              type: "removeProgram",
+              robotId: robot.id,
+              programId: program.id,
+            })
+          }
+        >
+          ✕
+        </button>
       </div>
     </div>
   );

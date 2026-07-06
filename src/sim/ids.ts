@@ -60,6 +60,19 @@ export function createRobotTaskId(
   return `task.${robotId}.${pad(state.tick, 6)}.${taskType}.${pad(sequenceInTick, 2)}`;
 }
 
+// Expansion 1: production.steelPlates.<buildingId>.<seq3>
+// seq3 = bisher produzierte Steel Plates des Gebaeudes (Zaehler in
+// inventory.output.steelPlates) + aktive Auftraege + 1.
+export function createSteelProductionTaskId(
+  buildingId: BuildingId,
+  state: GameState,
+): string {
+  const building = state.buildings.find((entry) => entry.id === buildingId);
+  const produced = building?.inventory?.output?.steelPlates ?? 0;
+  const activeTasks = building?.steelProductionTask ? 1 : 0;
+  return `production.steelPlates.${buildingId}.${pad(produced + activeTasks + 1, 3)}`;
+}
+
 export function createGameEventId(
   tick: Tick,
   sequenceInTick: number,

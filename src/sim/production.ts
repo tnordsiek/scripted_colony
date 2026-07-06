@@ -1,6 +1,7 @@
 // ProductionTask-Verarbeitung und Spawn nach docs/04-systems/production-and-spawn.md
 // und docs/03-technical/tick-pipeline.md (Schritte 3 und 4).
 import {
+  EXP1_STEEL_RECIPE_OUTPUT_STEEL_PLATES,
   MVP_IRON_MINER_BATTERY,
   MVP_IRON_MINER_BATTERY_MAX,
   MVP_IRON_MINER_CARGO_CAPACITY,
@@ -8,7 +9,6 @@ import {
   MVP_IRON_MINER_HP_MAX,
   MVP_IRON_MINER_SIGHT_RANGE,
 } from "./constants";
-import { computeEnergySnapshot } from "./energy";
 import { createSpawnedRobotId } from "./ids";
 import { getOrthogonalNeighbors, isFieldPassable, isInsideMap } from "./pathfinding";
 import { createSeededRng, makeRngInput, sortFieldCoords } from "./rng";
@@ -20,9 +20,12 @@ export type ProductionTickResult = {
 };
 
 // Schritt 3: nur fortschrittsberechtigte Tasks (inProgress, startedTick < currentTick).
-export function processProductionTasks(state: GameState): ProductionTickResult {
+// grantedPower kommt aus der Energie-Zuteilung (allocateEnergyTick).
+export function processProductionTasks(
+  state: GameState,
+  grantedPower: Set<string>,
+): ProductionTickResult {
   const result: ProductionTickResult = { pausedTaskIds: [], readyTaskIds: [] };
-  const snapshot = computeEnergySnapshot(state);
 
   const factories = [...state.buildings]
     .filter((building) => building.productionTask)
@@ -37,8 +40,7 @@ export function processProductionTasks(state: GameState): ProductionTickResult {
     const enoughPower =
       factory.status === "active" &&
       factory.isEnabled &&
-      snapshot.powerProvided >= snapshot.powerRequired &&
-      task.powerRequired <= snapshot.powerProvided - (snapshot.powerRequired - task.powerRequired);
+      grantedPower.has(`production:${task.id}`);
 
     if (enoughPower) {
       task.remainingTicks -= 1;
@@ -55,6 +57,110 @@ export function processProductionTasks(state: GameState): ProductionTickResult {
   }
 
   return result;
+}
+
+export type SteelTickResult = {
+  pausedTaskIds: string[];
+  outputBlockedTaskIds: string[];
+  completed: Array<{ taskId: string; buildingId: string }>;
+};
+
+// Expansion 1: Stahlwerk-Verarbeitung (docs/02-mvp/expansion-1-scope.md).
+// Output geht in das Startroboter-Cargo; bei vollem Cargo outputBlocked.
+export function processSteelTasks(
+  state: GameState,
+  grantedPower: Set<string>,
+): SteelTickResult {
+  const result: SteelTickResult = {
+    pausedTaskIds: [],
+    outputBlockedTaskIds: [],
+    completed: [],
+  };
+
+  const steelworks = [...state.buildings]
+    .filter((building) => building.steelProductionTask)
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+  const starter = state.robots.find((robot) => robot.type === "starterRobot");
+
+  for (const building of steelworks) {
+    const task = building.steelProductionTask;
+    if (!task || task.startedTick >= state.tick) {
+      continue;
+    }
+
+    const tryDeliverOutput = (): boolean => {
+      if (!starter) {
+        return false;
+      }
+      const cargoUsed = Object.values(starter.cargo.used).reduce(
+        (sum, amount) => sum + (amount ?? 0),
+        0,
+      );
+      if (cargoUsed >= starter.cargo.capacity) {
+        return false;
+      }
+      starter.cargo.used.steelPlates =
+        (starter.cargo.used.steelPlates ?? 0) + EXP1_STEEL_RECIPE_OUTPUT_STEEL_PLATES;
+      return true;
+    };
+
+    if (task.status === "outputBlocked") {
+      // Nachholen, sobald Cargo-Platz frei ist.
+      if (tryDeliverOutput()) {
+        task.completedTick = state.tick;
+        building.steelProductionTask = undefined;
+        incrementSteelCounter(building);
+        result.completed.push({ taskId: task.id, buildingId: building.id });
+      } else {
+        result.outputBlockedTaskIds.push(task.id);
+      }
+      continue;
+    }
+
+    const enoughPower =
+      building.status === "active" &&
+      building.isEnabled &&
+      grantedPower.has(`steel:${task.id}`);
+
+    if (!enoughPower) {
+      task.blockedReason = "insufficientPower";
+      result.pausedTaskIds.push(task.id);
+      continue;
+    }
+
+    task.blockedReason = undefined;
+    task.remainingTicks -= 1;
+    if (task.remainingTicks > 0) {
+      continue;
+    }
+
+    if (tryDeliverOutput()) {
+      task.completedTick = state.tick;
+      building.steelProductionTask = undefined;
+      incrementSteelCounter(building);
+      result.completed.push({ taskId: task.id, buildingId: building.id });
+    } else {
+      task.status = "outputBlocked";
+      task.blockedReason = "cargoFull";
+      result.outputBlockedTaskIds.push(task.id);
+    }
+  }
+
+  return result;
+}
+
+// Lebenszeitzaehler fuer die SteelProductionTaskId-Sequenz
+// (deterministic-id-generation.md).
+function incrementSteelCounter(building: Building): void {
+  if (!building.inventory) {
+    building.inventory = {};
+  }
+  if (!building.inventory.output) {
+    building.inventory.output = {};
+  }
+  building.inventory.output.steelPlates =
+    (building.inventory.output.steelPlates ?? 0) + 1;
 }
 
 function createSpawnedIronMiner(state: GameState, spawnField: FieldCoord): Robot {

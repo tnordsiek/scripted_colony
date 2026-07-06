@@ -40,9 +40,14 @@ Objektiver Fortschritt: `npm test -- --run` (107 Tests, alle gruen).
 | Stufe | Inhalt | Status |
 |---|---|---|
 | 1 | MVP-Feinschliff (End-Screen, Persistenz, Doku-/P1-Tests) | fertig (126 Tests gruen) |
-| 2 | GitHub-Deployment (Push + Pages via Actions) | gepusht; Pages-Verifikation laeuft |
+| 2 | GitHub-Deployment (Push + Pages via Actions) | fertig — live: https://tnordsiek.github.io/scripted_colony/ |
 | 3 | Doku-Inkrement v111: Expansion 1 Scope (Forschung + Tier-2-Einstieg) | fertig |
-| 4 | Implementierung Expansion 1 (research.ts, Stahlwerk, Energiespeicher, Template-Bibliothek, ResearchPanel, EXP1-Tests) | offen — naechster Schritt |
+| 4 | Implementierung Expansion 1 (research.ts, Stahlwerk, Energiespeicher, Template-Bibliothek, ResearchPanel, EXP1-Tests) | fertig — 143 Tests gruen inkl. EXP1-E2E |
+
+Waehrend Stufe 4 gefundene und behobene Design-Luecken (Doku + Code):
+Einschluss-Schutz und Commitment-Regel der Bauplatzwahl
+(pathfinding-and-map-generation.md), Template-Einfuegeposition ueber der
+Erkundung (expansion-1-scope.md).
 
 Expansion-1-Spezifikation: docs/02-mvp/expansion-1-scope.md (Quelleigentuemer),
 EXP1-Konstanten in mvp-constants.md, EXP1-Tests in mvp-test-matrix.md.

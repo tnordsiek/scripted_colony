@@ -70,6 +70,7 @@ export function GameLayout({ state, sendCommand }: GameLayoutProps) {
           />
           {openEditorProgramId && selectedRobot && (
             <ProgramEditorPanel
+              state={state}
               robot={selectedRobot}
               programId={openEditorProgramId}
               sendCommand={sendCommand}

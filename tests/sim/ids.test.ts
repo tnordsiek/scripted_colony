@@ -30,6 +30,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
       totalScore: 0,
     },
     mvpGoalReached: false,
+    research: { progress: {}, completedProjects: [] },
     materialRequests: [],
     ...overrides,
   };

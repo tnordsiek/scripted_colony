@@ -1,10 +1,21 @@
 // PlayerCommand-Verarbeitung nach docs/03-technical/player-command-handling.md
 // und canonical-data-model.md. Rejected Commands mutieren keinen Spielstate.
-import { MVP_IRON_MINER_PRODUCTION } from "./constants";
+import {
+  EXP1_STEEL_RECIPE_INPUT_IRON_ORE,
+  EXP1_STEEL_RECIPE_POWER_REQUIRED,
+  EXP1_STEEL_RECIPE_TICKS,
+  MVP_IRON_MINER_PRODUCTION,
+} from "./constants";
 import { makeCommandSortKey, type GameEventCandidate } from "./events";
-import { createProductionTaskId } from "./ids";
+import { createProductionTaskId, createSteelProductionTaskId } from "./ids";
 import { createProgramInstanceFromTemplate } from "./programs";
 import { validateUpdateProgram } from "./programEditing";
+import {
+  areExecutionLimitsUnlocked,
+  getActiveResearchProject,
+  hasActiveResearchCenter,
+  isTemplateUnlocked,
+} from "./research";
 import type {
   CommandRejectionReason,
   CommandResult,
@@ -159,7 +170,9 @@ function applySingleCommand(state: GameState, command: PlayerCommand): CommandRe
       if (!found) {
         return reject("programNotFound");
       }
-      const validationError = validateUpdateProgram(found.program, command.program);
+      const validationError = validateUpdateProgram(found.program, command.program, {
+        allowExecutionLimitEdit: areExecutionLimitsUnlocked(state),
+      });
       if (validationError) {
         return reject(validationError);
       }
@@ -247,6 +260,123 @@ function applySingleCommand(state: GameState, command: PlayerCommand): CommandRe
       }
       return ACCEPTED;
 
+    // --- Expansion 1 -------------------------------------------------------
+
+    case "selectResearchProject": {
+      if (!hasActiveResearchCenter(state)) {
+        return reject("researchCenterMissing");
+      }
+      const project = getActiveResearchProject(command.projectId);
+      if (!project) {
+        return reject("unknownResearchProject");
+      }
+      if (state.research.completedProjects.includes(command.projectId)) {
+        return reject("researchProjectAlreadyCompleted");
+      }
+      const prerequisitesMet = project.prerequisites.every((prerequisite) =>
+        state.research.completedProjects.includes(prerequisite),
+      );
+      if (!prerequisitesMet) {
+        return reject("researchPrerequisiteMissing");
+      }
+      state.research.activeProjectId = command.projectId;
+      state.research.activeProjectSelectedTick = state.tick;
+      return ACCEPTED;
+    }
+
+    case "startSteelProduction": {
+      const building = state.buildings.find(
+        (entry) => entry.id === command.buildingId,
+      );
+      if (!building) {
+        return reject("buildingNotFound");
+      }
+      if (building.type !== "steelworks") {
+        return reject("buildingIsNotSteelworks");
+      }
+      if (building.status !== "active") {
+        return reject("buildingNotActive");
+      }
+      if (!building.isEnabled) {
+        return reject("buildingDisabled");
+      }
+      if (building.steelProductionTask) {
+        return reject("steelProductionAlreadyRunning");
+      }
+      const starter = state.robots.find((robot) => robot.type === "starterRobot");
+      if (!starter || (starter.status !== "active" && starter.status !== "stasis")) {
+        return reject("starterRobotMissing");
+      }
+      const availableOre = starter.cargo.used.ironOre ?? 0;
+      if (availableOre < EXP1_STEEL_RECIPE_INPUT_IRON_ORE) {
+        return reject("notEnoughIronOreInStarterCargo");
+      }
+
+      starter.cargo.used.ironOre = availableOre - EXP1_STEEL_RECIPE_INPUT_IRON_ORE;
+      building.steelProductionTask = {
+        id: createSteelProductionTaskId(building.id, state),
+        buildingId: building.id,
+        cost: { ironOre: EXP1_STEEL_RECIPE_INPUT_IRON_ORE },
+        costPaid: true,
+        totalTicks: EXP1_STEEL_RECIPE_TICKS,
+        remainingTicks: EXP1_STEEL_RECIPE_TICKS,
+        powerRequired: EXP1_STEEL_RECIPE_POWER_REQUIRED,
+        status: "inProgress",
+        createdTick: state.tick,
+        startedTick: state.tick,
+      };
+      return ACCEPTED;
+    }
+
+    case "addProgramFromTemplate": {
+      const robot = findRobot(state, command.robotId);
+      if (!robot) {
+        return reject("robotNotFound");
+      }
+      if (!isTemplateUnlocked(state, command.templateId)) {
+        return reject("templateNotUnlocked");
+      }
+      if (robot.programStack.some((program) => program.templateId === command.templateId)) {
+        return reject("duplicateProgram");
+      }
+      const instance = createProgramInstanceFromTemplate(command.templateId);
+      // Direkt ueber dem ersten Erkundungsprogramm einfuegen (Bau vor Erkundung,
+      // wie im MVP-Startstack); sonst ueber dem Stasis-Laden-Programm.
+      const exploreIndex = robot.programStack.findIndex(
+        (program) => program.templateId === "template.exploreNearby",
+      );
+      if (exploreIndex >= 0) {
+        robot.programStack.splice(exploreIndex, 0, instance);
+      } else {
+        const lastIndex = robot.programStack.length - 1;
+        if (lastIndex >= 0 && robot.programStack[lastIndex]?.locked) {
+          robot.programStack.splice(lastIndex, 0, instance);
+        } else {
+          robot.programStack.push(instance);
+        }
+      }
+      return ACCEPTED;
+    }
+
+    case "removeProgram": {
+      const robot = findRobot(state, command.robotId);
+      if (!robot) {
+        return reject("robotNotFound");
+      }
+      const found = findProgram(robot, command.programId);
+      if (!found) {
+        return reject("programNotFound");
+      }
+      if (found.program.locked) {
+        return reject("programLocked");
+      }
+      robot.programStack.splice(found.index, 1);
+      if (robot.activeProgram?.programId === command.programId) {
+        robot.activeProgram = undefined;
+      }
+      return ACCEPTED;
+    }
+
     default:
       return reject("invalidCommand");
   }
@@ -271,6 +401,31 @@ export function applyPlayerCommands(
 
     if (result.type === "rejected") {
       if (
+        command.type === "startSteelProduction" &&
+        result.reason === "notEnoughIronOreInStarterCargo"
+      ) {
+        const starter = state.robots.find((robot) => robot.type === "starterRobot");
+        events.push({
+          tick: state.tick,
+          visibility: "player",
+          severity: "warning",
+          priority: "high",
+          category: "production",
+          code: "production.steelPlates.blocked.notEnoughOre",
+          message: "Stahlverarbeitung blockiert: Nicht genug Iron Ore im Startroboter-Cargo.",
+          buildingId: command.buildingId,
+          entityId: command.buildingId,
+          details: {
+            reason: "notEnoughIronOreInStarterCargo",
+            requiredOre: EXP1_STEEL_RECIPE_INPUT_IRON_ORE,
+            availableOre: starter?.cargo.used.ironOre ?? 0,
+          },
+          pipelineStepOrder: 1,
+          sourceOrder: index,
+          entitySortKey: makeCommandSortKey(index),
+          localSequence: 1,
+        });
+      } else if (
         command.type === "startIronMinerProduction" &&
         result.reason === "notEnoughIronOreInStarterCargo"
       ) {
@@ -312,6 +467,45 @@ export function applyPlayerCommands(
           localSequence: 1,
         });
       }
+    } else if (command.type === "selectResearchProject") {
+      events.push({
+        tick: state.tick,
+        visibility: "player",
+        severity: "info",
+        priority: "normal",
+        category: "system",
+        code: "research.projectSelected",
+        message: `Forschungsprojekt gewaehlt: ${command.projectId}.`,
+        entityId: `research.${command.projectId}`,
+        details: { projectId: command.projectId },
+        pipelineStepOrder: 1,
+        sourceOrder: index,
+        entitySortKey: makeCommandSortKey(index),
+        localSequence: 1,
+      });
+    } else if (command.type === "startSteelProduction") {
+      const building = state.buildings.find(
+        (entry) => entry.id === command.buildingId,
+      );
+      events.push({
+        tick: state.tick,
+        visibility: "player",
+        severity: "info",
+        priority: "normal",
+        category: "production",
+        code: "production.steelPlates.started",
+        message: "Stahlverarbeitung gestartet (2 Iron Ore -> 1 Steel Plate).",
+        buildingId: command.buildingId,
+        entityId: command.buildingId,
+        details: {
+          steelTaskId: building?.steelProductionTask?.id ?? "",
+          remainingTicks: building?.steelProductionTask?.remainingTicks ?? 0,
+        },
+        pipelineStepOrder: 1,
+        sourceOrder: index,
+        entitySortKey: makeCommandSortKey(index),
+        localSequence: 1,
+      });
     } else if (command.type === "startIronMinerProduction") {
       const building = state.buildings.find(
         (entry) => entry.id === command.buildingId,

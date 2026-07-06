@@ -128,6 +128,8 @@ Reihenfolge im EnergySnapshot:
    Ueberschuss verbraucht oder alle Speicher voll (200) sind.
 Entladene Energie zaehlt zu powerProvided des Ticks; geladene Energie
 reduziert freePower.
+Reicht die Gesamtleistung nicht fuer alle Verbraucher, werden Verbraucher in
+BuildingId-Reihenfolge bedient; wofuer die Restleistung nicht reicht, pausiert.
 ```
 
 ### Template-Bibliothek (neu aktiv)
@@ -149,7 +151,10 @@ Neue PlayerCommands fuer die Bibliothek:
 
 ```text
 addProgramFromTemplate: fuegt eine Instanz eines freigeschalteten Templates
-  ueber dem Stasis-Laden-Programm in den Stack ein
+  direkt ueber dem ersten Erkundungsprogramm (template.exploreNearby) ein,
+  sonst ueber dem Stasis-Laden-Programm. Begruendung: Bau-Templates gehoeren
+  wie im MVP-Startstack vor die Erkundung, sonst zieht Erkunden den Roboter
+  bei jeder Stack-Neubewertung vom Bauziel weg.
   (Ablehnungen: templateNotUnlocked, duplicateProgram, robotNotFound).
 removeProgram: entfernt eine nicht-locked Programminstanz aus dem Stack
   (Ablehnungen: programNotFound, programLocked).

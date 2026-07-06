@@ -1,8 +1,10 @@
 // Formular-/Zeileneditor fuer Template-Instanzen. Erzeugt nur updateProgram-Payloads,
 // die der Template-Edit-Policy entsprechen (docs/03-technical/visual-programming-data-model.md).
 import { useEffect, useState } from "react";
+import { areExecutionLimitsUnlocked } from "../sim/research";
 import type {
   ActionParameterValue,
+  GameState,
   PlayerCommand,
   ProgramInstance,
   Robot,
@@ -11,6 +13,7 @@ import { ActionParameterEditor } from "./ActionParameterEditor";
 import { ConditionEditor } from "./ConditionEditor";
 
 type ProgramEditorPanelProps = {
+  state: GameState;
   robot: Robot;
   programId: string;
   sendCommand: (command: PlayerCommand) => void;
@@ -18,11 +21,13 @@ type ProgramEditorPanelProps = {
 };
 
 export function ProgramEditorPanel({
+  state,
   robot,
   programId,
   sendCommand,
   onClose,
 }: ProgramEditorPanelProps) {
+  const limitsUnlocked = areExecutionLimitsUnlocked(state);
   const program = robot.programStack.find((entry) => entry.id === programId);
   const [draft, setDraft] = useState<ProgramInstance | null>(
     program ? structuredClone(program) : null,
@@ -85,6 +90,41 @@ export function ProgramEditorPanel({
         />
         aktiviert
       </label>
+      {limitsUnlocked && draft.rows[0]?.then.actionId === "action.buildBuilding" && (
+        <label className="parameter-field">
+          Ausfuehrungslimit
+          <select
+            value={
+              draft.executionLimit?.type === "count"
+                ? String(draft.executionLimit.maxExecutions)
+                : (draft.executionLimit?.type ?? "unlimited")
+            }
+            onChange={(event) => {
+              const value = event.target.value;
+              const next = structuredClone(draft);
+              if (value === "unlimited") {
+                delete next.executionLimit;
+              } else if (value === "once") {
+                next.executionLimit = { type: "once" };
+              } else {
+                next.executionLimit = {
+                  type: "count",
+                  maxExecutions: Number(value),
+                };
+              }
+              setDraft(next);
+            }}
+          >
+            <option value="unlimited">unbegrenzt</option>
+            <option value="once">einmal</option>
+            {[2, 3, 5, 10].map((count) => (
+              <option key={count} value={count}>
+                {count}x
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {draft.rows.map((row) => (
         <div key={row.id} className="editor-row">
           <ConditionEditor ifCondition={row.if} stop={row.stop} />

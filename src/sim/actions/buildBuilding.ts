@@ -2,12 +2,26 @@
 // docs/03-technical/action-executability-matrix.md und
 // docs/03-technical/pathfinding-and-map-generation.md (Build-Action Bauplatzwahl).
 import {
+  EXP1_AI_RESEARCH_CENTER_CONSTRUCTION_REQUIRED,
+  EXP1_AI_RESEARCH_CENTER_COST_IRON_ORE,
+  EXP1_AI_RESEARCH_CENTER_HP,
+  EXP1_ENERGY_STORAGE_CONSTRUCTION_REQUIRED,
+  EXP1_ENERGY_STORAGE_COST_STEEL_PLATES,
+  EXP1_ENERGY_STORAGE_HP,
+  EXP1_STEELWORKS_CONSTRUCTION_REQUIRED,
+  EXP1_STEELWORKS_COST_IRON_ORE,
+  EXP1_STEELWORKS_HP,
   MVP_BUILDING_CONSTRUCTION_REQUIRED,
+  MVP_BUILDING_SIGHT_RANGE,
   MVP_BUILD_BATTERY_COST,
   MVP_BUILD_TICKS,
+  MVP_IRON_MINER_PRODUCTION_POWER_REQUIRED,
   MVP_ROBOT_FACTORY_COST_IRON_ORE,
+  MVP_ROBOT_FACTORY_IDLE_POWER_REQUIRED,
   MVP_SOLAR_COLLECTOR_COST_IRON_ORE,
+  MVP_SOLAR_COLLECTOR_POWER_PROVIDED,
 } from "../constants";
+import { isProjectCompleted } from "../research";
 import { createBuildingId, createRobotTaskId } from "../ids";
 import {
   bfsPath,
@@ -19,6 +33,7 @@ import {
 import { createSeededRng, makeRngInput, sortFieldCoords } from "../rng";
 import type {
   ActionExecutabilityResult,
+  ActiveBuildableType,
   BuildTarget,
   Building,
   BuildingTask,
@@ -32,12 +47,65 @@ import type {
   Robot,
 } from "../types";
 
-type MvpBuildableType = "solarCollector" | "robotFactory";
+// Aktive Gebaeudekonfiguration (MVP + Expansion 1, docs/02-mvp/expansion-1-scope.md).
+type ActiveBuildingConfig = {
+  cost: ResourceCost;
+  hp: number;
+  constructionRequired: number;
+  sightRange: number;
+  extraFields: Partial<Building>;
+  requiredResearch?: "research.metalProcessing1" | "research.energyBuffer1";
+};
 
-export function getBuildingCost(buildingType: MvpBuildableType): ResourceCost {
-  return buildingType === "solarCollector"
-    ? { ironOre: MVP_SOLAR_COLLECTOR_COST_IRON_ORE }
-    : { ironOre: MVP_ROBOT_FACTORY_COST_IRON_ORE };
+export const ACTIVE_BUILDING_CONFIGS: Record<ActiveBuildableType, ActiveBuildingConfig> = {
+  solarCollector: {
+    cost: { ironOre: MVP_SOLAR_COLLECTOR_COST_IRON_ORE },
+    hp: 100,
+    constructionRequired: MVP_BUILDING_CONSTRUCTION_REQUIRED,
+    sightRange: MVP_BUILDING_SIGHT_RANGE,
+    extraFields: { powerProvided: MVP_SOLAR_COLLECTOR_POWER_PROVIDED },
+  },
+  robotFactory: {
+    cost: { ironOre: MVP_ROBOT_FACTORY_COST_IRON_ORE },
+    hp: 100,
+    constructionRequired: MVP_BUILDING_CONSTRUCTION_REQUIRED,
+    sightRange: MVP_BUILDING_SIGHT_RANGE,
+    extraFields: {
+      powerRequired: MVP_IRON_MINER_PRODUCTION_POWER_REQUIRED,
+      powerConsumed: MVP_ROBOT_FACTORY_IDLE_POWER_REQUIRED,
+    },
+  },
+  aiResearchCenter: {
+    cost: { ironOre: EXP1_AI_RESEARCH_CENTER_COST_IRON_ORE },
+    hp: EXP1_AI_RESEARCH_CENTER_HP,
+    constructionRequired: EXP1_AI_RESEARCH_CENTER_CONSTRUCTION_REQUIRED,
+    sightRange: MVP_BUILDING_SIGHT_RANGE,
+    extraFields: {},
+  },
+  steelworks: {
+    cost: { ironOre: EXP1_STEELWORKS_COST_IRON_ORE },
+    hp: EXP1_STEELWORKS_HP,
+    constructionRequired: EXP1_STEELWORKS_CONSTRUCTION_REQUIRED,
+    sightRange: MVP_BUILDING_SIGHT_RANGE,
+    extraFields: {},
+    requiredResearch: "research.metalProcessing1",
+  },
+  energyStorage: {
+    cost: { steelPlates: EXP1_ENERGY_STORAGE_COST_STEEL_PLATES },
+    hp: EXP1_ENERGY_STORAGE_HP,
+    constructionRequired: EXP1_ENERGY_STORAGE_CONSTRUCTION_REQUIRED,
+    sightRange: 1,
+    extraFields: { storedEnergy: 0 },
+    requiredResearch: "research.energyBuffer1",
+  },
+};
+
+export function isActiveBuildableType(value: string): value is ActiveBuildableType {
+  return value in ACTIVE_BUILDING_CONFIGS;
+}
+
+export function getBuildingCost(buildingType: ActiveBuildableType): ResourceCost {
+  return ACTIVE_BUILDING_CONFIGS[buildingType].cost;
 }
 
 function cargoHasCost(robot: Robot, cost: ResourceCost): boolean {
@@ -81,6 +149,26 @@ function isValidBuildSite(state: GameState, robot: Robot, coord: FieldCoord): bo
   if (reservation && !reservation.reservedByRobotIds.includes(robot.id)) {
     return false;
   }
+
+  // Einschluss-Schutz: Ein Baufeld direkt neben dem Roboter ist ungueltig,
+  // wenn der Roboter danach keinen passierbaren orthogonalen Nachbarn mehr
+  // haette (er wuerde sich selbst einmauern).
+  if (manhattanDistance(coord, robot) === 1) {
+    const otherPassableNeighbors = getOrthogonalNeighbors({
+      x: robot.x,
+      y: robot.y,
+    }).filter(
+      (neighbor) =>
+        !(neighbor.x === coord.x && neighbor.y === coord.y) &&
+        isInsideMap(state.map, neighbor) &&
+        isFieldPassable(state.map[neighbor.y][neighbor.x]) &&
+        !isRobotOn(state, neighbor),
+    );
+    if (otherPassableNeighbors.length === 0) {
+      return false;
+    }
+  }
+
   return true;
 }
 
@@ -126,9 +214,28 @@ function bestBuildFrom(
 export function selectNewConstructionSite(
   state: GameState,
   robot: Robot,
-  buildingType: MvpBuildableType,
+  buildingType: ActiveBuildableType,
   sourceRowId: ProgramRowId,
 ): RankedSite | null {
+  // Commitment: Ein bereits durch diesen Roboter reserviertes, weiterhin
+  // gueltiges Baufeld wird beibehalten (verhindert Ziel-Pendeln bei
+  // tick-abhaengigen Tie-Breaks waehrend der Anfahrt).
+  for (const row of state.map) {
+    for (const field of row) {
+      if (!field.reservedForConstruction?.reservedByRobotIds.includes(robot.id)) {
+        continue;
+      }
+      const coord = { x: field.x, y: field.y };
+      if (!isValidBuildSite(state, robot, coord)) {
+        continue;
+      }
+      const reach = bestBuildFrom(state, robot, coord);
+      if (reach) {
+        return { site: coord, buildFrom: reach.buildFrom, path: reach.path };
+      }
+    }
+  }
+
   const candidates: RankedSite[] = [];
   for (const row of state.map) {
     for (const field of row) {
@@ -223,7 +330,7 @@ function planBuildingTaskAt(
   sourceProgramId: ProgramInstanceId,
   sourceRowId: ProgramRowId,
 ): BuildingTask {
-  const cost = getBuildingCost(target.buildingType as MvpBuildableType);
+  const cost = getBuildingCost(target.buildingType as ActiveBuildableType);
   return {
     id: createRobotTaskId(robot.id, "building", state),
     type: "building",
@@ -233,7 +340,7 @@ function planBuildingTaskAt(
     startedTick: state.tick,
     mode: target.mode,
     buildingId: target.buildingId ?? createBuildingId(target.buildingType, state),
-    buildingType: target.buildingType as MvpBuildableType,
+    buildingType: target.buildingType as ActiveBuildableType,
     site: target.site,
     buildFrom: target.buildFrom,
     totalTicks: MVP_BUILD_TICKS,
@@ -284,7 +391,12 @@ export function planBuildBuilding(
   if (buildingType === undefined) {
     return { type: "notExecutable", reason: "missingParameter" };
   }
-  if (buildingType !== "solarCollector" && buildingType !== "robotFactory") {
+  if (typeof buildingType !== "string" || !isActiveBuildableType(buildingType)) {
+    return { type: "notExecutable", reason: "unsupportedMvpTarget" };
+  }
+
+  const requiredResearch = ACTIVE_BUILDING_CONFIGS[buildingType].requiredResearch;
+  if (requiredResearch && !isProjectCompleted(state, requiredResearch)) {
     return { type: "notExecutable", reason: "unsupportedMvpTarget" };
   }
 

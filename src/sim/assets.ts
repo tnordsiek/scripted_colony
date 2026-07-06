@@ -78,6 +78,27 @@ export const MVP_FALLBACK_ASSET_REGISTRY: FallbackAssetRegistry = {
     label: "Roboterfabrik",
     fallback: true,
   },
+  "building.aiResearchCenter": {
+    key: "building.aiResearchCenter",
+    kind: "cssShape",
+    source: "#9a5fd1",
+    label: "KI-Forschungszentrum",
+    fallback: true,
+  },
+  "building.steelworks": {
+    key: "building.steelworks",
+    kind: "cssShape",
+    source: "#a33c2e",
+    label: "Stahlwerk",
+    fallback: true,
+  },
+  "building.energyStorage": {
+    key: "building.energyStorage",
+    kind: "cssShape",
+    source: "#3cae5c",
+    label: "Energiespeicher",
+    fallback: true,
+  },
   "building.construction": {
     key: "building.construction",
     kind: "cssShape",

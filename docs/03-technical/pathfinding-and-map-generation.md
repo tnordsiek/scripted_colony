@@ -1576,6 +1576,8 @@ Grundregeln:
 Baufeld muss visible, plains, frei von Gebäuden, Ressourcen, Robotern und Reservierungen sein.
 Baufeld darf nicht das aktuelle Feld des bauenden Roboters sein.
 Zu jedem Baufeld muss ein erreichbares orthogonal angrenzendes Bau-Ausführungsfeld existieren.
+Einschluss-Schutz: Ein Baufeld orthogonal neben dem bauenden Roboter ist ungültig,
+wenn der Roboter nach dem Bau keinen passierbaren orthogonalen Nachbarn mehr hätte.
 Array-Zugriff bleibt map[y][x].
 ```
 
@@ -1605,3 +1607,12 @@ Tie-Breaker: kürzeste Distanz zum Solar Collector, dann kürzester Roboterpfad,
 ```
 
 Alle Gleichstände sind seeded deterministic nach `docs/03-technical/seeded-rng.md`.
+
+Commitment-Regel:
+
+```text
+Ein Baufeld, das der bauende Roboter bereits fuer sich reserviert hat und das
+weiterhin gueltig und erreichbar ist, wird bei der naechsten Zielauswahl
+beibehalten. Erst wenn es ungueltig oder unerreichbar wird, erfolgt eine
+Neuauswahl (Reservierung freigeben, Zielauswahl neu).
+```

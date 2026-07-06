@@ -553,6 +553,10 @@ type Building = {
 
   inventory?: BuildingInventory;
   productionTask?: ProductionTask;
+
+  // Expansion 1:
+  steelProductionTask?: SteelProductionTask;
+  storedEnergy?: number; // nur energyStorage, 0..Kapazitaet
 };
 ```
 
@@ -878,7 +882,9 @@ type ConditionValue =
   | { type: "buildingStatus"; value: BuildingStatus }
   | { type: "buildingQuery"; value: BuildingQuery }
   | { type: "robotStatus"; value: RobotStatus }
-  | { type: "power"; value: number };
+  | { type: "power"; value: number }
+  // Expansion 1: Cargo-Menge einer konkreten Ressource (sensor.cargoResourceAmount)
+  | { type: "resourceAmount"; value: { resourceType: ResourceType; amount: number } };
 
 type FieldTypeQuery =
   | "ironOre"
@@ -1254,11 +1260,19 @@ type MiningTask = BaseRobotTask & {
   batteryCostOnSuccess: number;
 };
 
+type ActiveBuildableType =
+  | "solarCollector"
+  | "robotFactory"
+  // Expansion 1:
+  | "aiResearchCenter"
+  | "steelworks"
+  | "energyStorage";
+
 type BuildingTask = BaseRobotTask & {
   type: "building";
   mode: BuildingTaskMode;
   buildingId: BuildingId;
-  buildingType: "solarCollector" | "robotFactory";
+  buildingType: ActiveBuildableType;
   site: FieldCoord;
   buildFrom: FieldCoord;
   totalTicks: number;
@@ -1414,6 +1428,7 @@ Projektwerte stammen aus `docs/05-future/research-tree.md`.
 ```ts
 type ResearchState = {
   activeProjectId?: ResearchProjectId;
+  activeProjectSelectedTick?: Tick; // Punkte/Leistungsbedarf erst ab Folgetick
   progress: Partial<Record<ResearchProjectId, number>>;
   completedProjects: ResearchProjectId[];
 };

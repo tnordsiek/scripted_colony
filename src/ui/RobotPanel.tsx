@@ -2,6 +2,7 @@
 import { deriveRobotActivityState } from "../sim/diagnostics";
 import type { GameState, PlayerCommand, Robot } from "../sim/types";
 import { ProgramStackPanel } from "./ProgramStackPanel";
+import { TemplateLibrary } from "./TemplateLibrary";
 
 type RobotPanelProps = {
   state: GameState;
@@ -67,6 +68,9 @@ export function RobotPanel({
           sendCommand={sendCommand}
           onEdit={onEditProgram}
         />
+      )}
+      {robot.type === "starterRobot" && (
+        <TemplateLibrary state={state} robot={robot} sendCommand={sendCommand} />
       )}
     </div>
   );

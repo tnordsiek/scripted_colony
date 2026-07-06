@@ -1,15 +1,14 @@
 // Einzige Implementierung der kanonischen Tick-Reihenfolge nach
 // docs/03-technical/tick-pipeline.md (11 Schritte).
 import { canExecuteAction } from "./actions/canExecuteAction";
-import { getBuildingCost, selectNewConstructionSite } from "./actions/buildBuilding";
-import { applyPlayerCommands, type CommandOutcome } from "./commands";
 import {
-  MVP_BUILDING_CONSTRUCTION_REQUIRED,
-  MVP_BUILDING_SIGHT_RANGE,
-  MVP_IRON_MINER_PRODUCTION_POWER_REQUIRED,
-  MVP_ROBOT_FACTORY_IDLE_POWER_REQUIRED,
-  MVP_SOLAR_COLLECTOR_POWER_PROVIDED,
-} from "./constants";
+  ACTIVE_BUILDING_CONFIGS,
+  getBuildingCost,
+  isActiveBuildableType,
+  selectNewConstructionSite,
+} from "./actions/buildBuilding";
+import { applyPlayerCommands, type CommandOutcome } from "./commands";
+import { allocateEnergyTick } from "./energy";
 import { type GameEventCandidate } from "./events";
 import { finalizeTickEvents } from "./events";
 import { createBuildingId } from "./ids";
@@ -17,8 +16,13 @@ import { processBuildingTask } from "./tasks/buildingTask";
 import { processMiningTask } from "./tasks/miningTask";
 import { processMovementTask } from "./tasks/movementTask";
 import { processStasisChargingTask } from "./tasks/stasisChargingTask";
-import { processProductionTasks, processSpawnChecks } from "./production";
+import {
+  processProductionTasks,
+  processSpawnChecks,
+  processSteelTasks,
+} from "./production";
 import { evaluateProgramStack } from "./programs";
+import { processResearchTick } from "./research";
 import { scoreRobotSpawned } from "./scoring";
 import { sortEntityIds } from "./rng";
 import { updateVisibility } from "./visibility";
@@ -78,25 +82,24 @@ function startBuildingTask(
     }
     task.costPaidByThisTask = true;
 
+    const config = ACTIVE_BUILDING_CONFIGS[task.buildingType];
     const building: Building = {
       id: task.buildingId,
       type: task.buildingType,
-      tier: 1,
+      tier:
+        task.buildingType === "steelworks" || task.buildingType === "energyStorage"
+          ? 2
+          : 1,
       x: task.site.x,
       y: task.site.y,
-      hp: { current: 100, max: 100 },
+      hp: { current: config.hp, max: config.hp },
       status: "construction",
       isEnabled: true,
-      sightRange: MVP_BUILDING_SIGHT_RANGE,
+      sightRange: config.sightRange,
       costPaid: cost,
       constructionProgress: 0,
-      constructionRequired: MVP_BUILDING_CONSTRUCTION_REQUIRED,
-      ...(task.buildingType === "solarCollector"
-        ? { powerProvided: MVP_SOLAR_COLLECTOR_POWER_PROVIDED }
-        : {
-            powerRequired: MVP_IRON_MINER_PRODUCTION_POWER_REQUIRED,
-            powerConsumed: MVP_ROBOT_FACTORY_IDLE_POWER_REQUIRED,
-          }),
+      constructionRequired: config.constructionRequired,
+      ...config.extraFields,
     };
     state.buildings.push(building);
     state.map[task.site.y][task.site.x].buildingId = building.id;
@@ -144,9 +147,11 @@ export function advanceTick(
   // Schritt 1: PlayerCommands validieren und anwenden.
   const commandOutcomes = applyPlayerCommands(state, commands, events);
 
-  // Schritt 2 (EnergySnapshot) wird in Schritt 3 konsumiert.
-  // Schritt 3: ProductionTasks verarbeiten.
-  const production = processProductionTasks(state);
+  // Schritt 2: Energie-Zuteilung (inkl. Energiespeicher-Puffer, Expansion 1).
+  const energy = allocateEnergyTick(state);
+
+  // Schritt 3: Gebaeudetasks verarbeiten (Produktion, Stahlwerk, Forschung).
+  const production = processProductionTasks(state, energy.granted);
   for (const [index, taskId] of production.pausedTaskIds.entries()) {
     events.push({
       tick: state.tick,
@@ -161,6 +166,96 @@ export function advanceTick(
       pipelineStepOrder: 3,
       sourceOrder: index,
       entitySortKey: `production:${taskId}`,
+      localSequence: 1,
+    });
+  }
+
+  // Schritt 3 (Fortsetzung): Stahlwerk-Verarbeitung (Expansion 1).
+  const steel = processSteelTasks(state, energy.granted);
+  for (const [index, taskId] of steel.pausedTaskIds.entries()) {
+    events.push({
+      tick: state.tick,
+      visibility: "player",
+      severity: "warning",
+      priority: "normal",
+      category: "production",
+      code: "production.steelPlates.paused.insufficientPower",
+      message: "Stahlverarbeitung pausiert: Nicht genug freie Leistung.",
+      entityId: taskId,
+      details: { reason: "insufficientPower" },
+      pipelineStepOrder: 3,
+      sourceOrder: 100 + index,
+      entitySortKey: `production:${taskId}`,
+      localSequence: 1,
+    });
+  }
+  for (const [index, taskId] of steel.outputBlockedTaskIds.entries()) {
+    events.push({
+      tick: state.tick,
+      visibility: "player",
+      severity: "warning",
+      priority: "normal",
+      category: "production",
+      code: "production.steelPlates.outputBlocked",
+      message: "Stahlverarbeitung wartet: Startroboter-Cargo ist voll.",
+      entityId: taskId,
+      details: { reason: "cargoFull" },
+      pipelineStepOrder: 3,
+      sourceOrder: 100 + index,
+      entitySortKey: `production:${taskId}`,
+      localSequence: 2,
+    });
+  }
+  for (const [index, entry] of steel.completed.entries()) {
+    events.push({
+      tick: state.tick,
+      visibility: "player",
+      severity: "success",
+      priority: "normal",
+      category: "production",
+      code: "production.steelPlates.completed",
+      message: "1 Steel Plate produziert.",
+      buildingId: entry.buildingId,
+      entityId: entry.taskId,
+      pipelineStepOrder: 3,
+      sourceOrder: 100 + index,
+      entitySortKey: `production:${entry.taskId}`,
+      localSequence: 3,
+    });
+  }
+
+  // Schritt 3 (Fortsetzung): Forschung (Expansion 1).
+  const research = processResearchTick(state, energy.granted.has("research"));
+  if (research.type === "paused") {
+    events.push({
+      tick: state.tick,
+      visibility: "player",
+      severity: "warning",
+      priority: "normal",
+      category: "system",
+      code: "research.paused.insufficientPower",
+      message: "Forschung pausiert: Nicht genug freie Leistung.",
+      entityId: `research.${research.projectId}`,
+      details: { projectId: research.projectId },
+      pipelineStepOrder: 3,
+      sourceOrder: 200,
+      entitySortKey: "system:global",
+      localSequence: 1,
+    });
+  } else if (research.type === "completed") {
+    events.push({
+      tick: state.tick,
+      visibility: "player",
+      severity: "success",
+      priority: "high",
+      category: "system",
+      code: "research.completed",
+      message: `Forschung abgeschlossen: ${research.projectId}.`,
+      entityId: `research.${research.projectId}`,
+      details: { projectId: research.projectId },
+      pipelineStepOrder: 3,
+      sourceOrder: 200,
+      entitySortKey: "system:global",
       localSequence: 1,
     });
   }
@@ -223,6 +318,16 @@ export function advanceTick(
       case "building": {
         const completion = processBuildingTask(state, robot, task);
         if (completion.type === "activated") {
+          // Ausfuehrungslimit-Zaehlung (Expansion 1, basicAutomation1).
+          const sourceProgram = robot.programStack.find(
+            (program) => program.id === task.sourceProgramId,
+          );
+          if (sourceProgram) {
+            sourceProgram.executionState = {
+              completedExecutions:
+                (sourceProgram.executionState?.completedExecutions ?? 0) + 1,
+            };
+          }
           events.push({
             tick: state.tick,
             visibility: "player",
@@ -430,7 +535,7 @@ export function advanceTick(
           : typeof parameter === "object" && parameter !== null && "value" in parameter
             ? parameter.value
             : undefined;
-      if (buildingType === "solarCollector" || buildingType === "robotFactory") {
+      if (typeof buildingType === "string" && isActiveBuildableType(buildingType)) {
         const hasConstruction = state.buildings.some(
           (building) =>
             building.type === buildingType && building.status === "construction",

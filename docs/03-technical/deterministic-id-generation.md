@@ -114,6 +114,8 @@ production.steelPlates.<buildingId>.<seq3>
 ```
 
 Sequenzregel: `seq3 = bereits produzierte Steel Plates dieses Gebaeudes + aktive Auftraege + 1`.
+Der Lebenszeitzaehler liegt in `building.inventory.output.steelPlates` und erhoeht sich
+pro abgeschlossenem Auftrag (in Expansion 1 reiner Zaehler; Logistik-Abholung ist Future).
 
 ### RobotId fuer gespawnte Roboter
 
