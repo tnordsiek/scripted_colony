@@ -349,3 +349,46 @@ select {
   padding: 0;
   color: #9a8f78;
 }
+
+.overlay-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.run-result-overlay {
+  min-width: 360px;
+  border-color: #a8843c;
+}
+
+.run-result-overlay h2 {
+  margin: 0 0 6px;
+  color: #9fe89f;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 14px;
+}
+
+.result-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #3a332a;
+}
+
+.result-table td:last-child {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.result-total td {
+  font-weight: bold;
+  color: #f2d98c;
+  border-bottom: none;
+}

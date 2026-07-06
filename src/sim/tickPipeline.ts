@@ -482,7 +482,7 @@ export function advanceTick(
         priority: "critical",
         category: "goal",
         code: "goal.mvpReached",
-        message: "MVP-Ziel erreicht: Erster Iron Miner erfolgreich gespawnt.",
+        message: "MVP-Ziel erreicht: erster Iron Miner gespawnt.",
         robotId: spawned.robotId,
         entityId: "goal.mvp",
         pipelineStepOrder: 9,

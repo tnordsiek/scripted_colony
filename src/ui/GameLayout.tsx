@@ -1,11 +1,13 @@
 // Hauptlayout: Karte links, Auswahl-/Programmbereich rechts, Steuerleiste unten.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GameState, PlayerCommand } from "../sim/types";
 import { BottomControlBar } from "./BottomControlBar";
 import { DiagnosticsPanel } from "./DiagnosticsPanel";
 import { EventLogPanel } from "./EventLogPanel";
 import { MapCanvas } from "./MapCanvas";
 import { ProgramEditorPanel } from "./ProgramEditorPanel";
+import { loadUiSettings, saveUiSettings } from "./persistence";
+import { RunResultOverlay } from "./RunResultOverlay";
 import { ScoreGoalPanel } from "./ScoreGoalPanel";
 import { SelectionPanel } from "./SelectionPanel";
 
@@ -16,7 +18,31 @@ type GameLayoutProps = {
 
 export function GameLayout({ state, sendCommand }: GameLayoutProps) {
   const [openEditorProgramId, setOpenEditorProgramId] = useState<string | undefined>();
-  const [diagnosticsExpanded, setDiagnosticsExpanded] = useState(false);
+  const [diagnosticsExpanded, setDiagnosticsExpanded] = useState(
+    () => loadUiSettings().diagnosticsExpanded ?? false,
+  );
+  const [showResult, setShowResult] = useState(false);
+  const goalSeen = useRef(state.mvpGoalReached);
+
+  // Ergebnisuebersicht genau einmal beim Uebergang mvpGoalReached false -> true.
+  useEffect(() => {
+    if (state.mvpGoalReached && !goalSeen.current) {
+      goalSeen.current = true;
+      setShowResult(true);
+    }
+    if (!state.mvpGoalReached) {
+      goalSeen.current = false;
+    }
+  }, [state.mvpGoalReached]);
+
+  // UI-Einstellungen persistieren (optional nach reset-seed-and-persistence.md).
+  useEffect(() => {
+    saveUiSettings({
+      diagnosticsExpanded,
+      speed: state.speed,
+      seed: state.randomSeed,
+    });
+  }, [diagnosticsExpanded, state.speed, state.randomSeed]);
 
   const selected = state.selected;
   const selectedRobot =
@@ -58,6 +84,13 @@ export function GameLayout({ state, sendCommand }: GameLayoutProps) {
         </div>
       </div>
       <BottomControlBar state={state} sendCommand={sendCommand} />
+      {showResult && (
+        <RunResultOverlay
+          state={state}
+          sendCommand={sendCommand}
+          onClose={() => setShowResult(false)}
+        />
+      )}
     </div>
   );
 }

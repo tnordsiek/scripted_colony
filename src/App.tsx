@@ -7,9 +7,18 @@ import { createInitialGame } from "./sim/createInitialGame";
 import { applyCommandsWhilePaused, tick } from "./sim/tick";
 import type { GameState, PlayerCommand } from "./sim/types";
 import { GameLayout } from "./ui/GameLayout";
+import { loadUiSettings } from "./ui/persistence";
 
 export function App() {
-  const [state, setState] = useState<GameState>(() => createInitialGame());
+  const [state, setState] = useState<GameState>(() => {
+    // Optional persistierte Einstellungen (Seed, Speed) wiederherstellen.
+    const settings = loadUiSettings();
+    const initial = createInitialGame(settings.seed ?? "mvp-default");
+    if (settings.speed === 1 || settings.speed === 2 || settings.speed === 4) {
+      initial.speed = settings.speed;
+    }
+    return initial;
+  });
   const pendingCommands = useRef<PlayerCommand[]>([]);
   const isPausedRef = useRef(state.isPaused);
   isPausedRef.current = state.isPaused;
