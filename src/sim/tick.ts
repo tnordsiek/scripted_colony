@@ -1,6 +1,8 @@
 // Oeffentliche Tick-Funktion. resetRun erzeugt einen neuen deterministischen
 // Startzustand nach docs/03-technical/reset-seed-and-persistence.md.
+import { applyPlayerCommands, type CommandOutcome } from "./commands";
 import { createInitialGame } from "./createInitialGame";
+import { finalizeTickEvents, type GameEventCandidate } from "./events";
 import { advanceTick, type TickResult } from "./tickPipeline";
 import type { GameState, PlayerCommand } from "./types";
 
@@ -29,4 +31,29 @@ export function tick(
   }
 
   return advanceTick(state, commands);
+}
+
+// Verarbeitet Commands waehrend der Pause, ohne die Simulation fortzuschreiben.
+// Die UI nutzt dies fuer pause/resume/Auswahl/Programm-Editing im Pausenmodus.
+export function applyCommandsWhilePaused(
+  state: GameState,
+  commands: PlayerCommand[],
+): { state: GameState; commandOutcomes: CommandOutcome[] } {
+  const resetCommand = commands.find(
+    (command): command is Extract<PlayerCommand, { type: "resetRun" }> =>
+      command.type === "resetRun" &&
+      (command.seed === undefined || command.seed.trim() !== ""),
+  );
+  if (resetCommand) {
+    return {
+      state: createInitialGame(resetCommand.seed ?? state.randomSeed),
+      commandOutcomes: [{ command: resetCommand, result: { type: "accepted" } }],
+    };
+  }
+
+  const next = structuredClone(state);
+  const events: GameEventCandidate[] = [];
+  const commandOutcomes = applyPlayerCommands(next, commands, events);
+  finalizeTickEvents(next, events);
+  return { state: next, commandOutcomes };
 }
