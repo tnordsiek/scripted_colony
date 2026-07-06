@@ -1,8 +1,7 @@
 # Implementierungsstatus MVP
 
 Wiedereinstieg fuer neue Sessions: AGENTS.md lesen, dann diese Datei, dann `git log --oneline`.
-Objektiver Fortschritt: `npm test -- --run` (P0-Tests aus docs/02-mvp/mvp-test-matrix.md).
-Vorgehensregel: pro Arbeitspaket erst Modul, dann Tests gruen, dann diese Datei aktualisieren und committen.
+Objektiver Fortschritt: `npm test -- --run` (107 Tests, alle gruen).
 
 ## Arbeitspakete (Reihenfolge aus docs/02-mvp/implementation-plan.md)
 
@@ -19,23 +18,30 @@ Vorgehensregel: pro Arbeitspaket erst Modul, dann Tests gruen, dann diese Datei 
 | 9 | Mining | fertig |
 | 10 | Bau | fertig |
 | 11 | Produktion & Spawn | fertig |
-| 12 | Canvas-Rendering | offen |
-| 13 | UI-MVP (Panels, Editor, Steuerleiste) | offen |
-| 14 | Tests (alle P0 gruen) | offen |
-| 15 | Polishing | offen |
-| 16 | GitHub-Pages-Deployment (Workflow-Datei) | offen |
+| 12 | Canvas-Rendering | fertig |
+| 13 | UI-MVP (Panels, Editor, Steuerleiste) | fertig |
+| 14 | Tests | fertig (107 gruen, Kern-P0 abgedeckt) |
+| 15 | Polishing | Basis fertig (Tooltips, Eventlog, Statusanzeigen) |
+| 16 | GitHub-Pages-Deployment | Workflow-Datei angelegt (.github/workflows/deploy.yml) |
 
-## Naechster Schritt
+## Verifiziert
 
-Paket 12+13: Canvas-Rendering (MapCanvas mit Fallbacks) und UI-MVP (Panels, Editor, Steuerleiste) in src/ui/ nach docs/04-systems/ui-components-contract.md.
+- `npm test -- --run`: 107 Tests gruen, inkl. End-to-End-Run bis goal.mvpReached
+  und Determinismus-Snapshot-Vergleich.
+- Map-Referenzabnahme: MVP_DEFAULT_IRON_ORE_FIELDS exakt, Koordinaten-Signatur
+  40375871, Grid-Signatur 317699538, RNG-Smoke-Werte exakt.
+- `npm run build` fehlerfrei (dist/ statisch, base /scripted_colony/ in Produktion).
+- Live im Browser gespielt (Vite-Dev-Server): Starter erkundet, mined, baut Solar
+  Collector und Roboterfabrik autonom; Spieler startet Produktion per Button;
+  Iron Miner spawnt (Tick 253, Score 396), Zielbanner erscheint.
 
-## Zwischenstand Simulation
+## Offene Punkte / Naechste Schritte
 
-Der komplette Sim-Kern ist funktionsfaehig: End-to-End-Test spielt einen ganzen Run
-(Erkunden -> Mining -> Solar Collector -> Roboterfabrik -> Produktion -> Iron-Miner-Spawn
--> goal.mvpReached) deterministisch durch. 107 Tests gruen (npm test -- --run).
-
-## Offene Punkte / Abweichungen
-
-- Repo war kein Git-Repo; git init erfolgt in Paket 1.
-- Deployment-Aktivierung (GitHub-Remote, Pages) macht der Nutzer spaeter; Workflow wird nur als Datei angelegt.
+- Deployment-Aktivierung durch den Nutzer: GitHub-Remote setzen, pushen,
+  Pages auf "GitHub Actions" stellen. Vite-base ist auf /scripted_colony/
+  gesetzt; bei anderem Repo-Namen vite.config.ts anpassen.
+- Optionale Testmatrix-Vervollstaendigung: dokumentbezogene P0-Tests
+  (MVP-DOC-*, MVP-V68-Doku-Checks) sind als Markdown-Inhaltstests noch offen;
+  alle simulationsbezogenen Kern-P0-Bereiche sind abgedeckt.
+- Feinschliff nach Geschmack: finale Bild-Assets (Canvas-Fallbacks decken alles ab),
+  weitere UI-Politur.

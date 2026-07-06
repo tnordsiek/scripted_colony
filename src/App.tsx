@@ -1,5 +1,7 @@
 // App-Wurzel: haelt den GameState und treibt den Game-Loop.
 // Die UI mutiert den State nie direkt, sondern sendet nur PlayerCommands.
+// Wichtig: State-Updater bleiben pur; die Command-Queue wird ausserhalb
+// der Updater geleert (StrictMode ruft Updater doppelt auf).
 import { useEffect, useRef, useState } from "react";
 import { createInitialGame } from "./sim/createInitialGame";
 import { applyCommandsWhilePaused, tick } from "./sim/tick";
@@ -9,19 +11,23 @@ import { GameLayout } from "./ui/GameLayout";
 export function App() {
   const [state, setState] = useState<GameState>(() => createInitialGame());
   const pendingCommands = useRef<PlayerCommand[]>([]);
+  const isPausedRef = useRef(state.isPaused);
+  isPausedRef.current = state.isPaused;
+
+  function drainCommands(): PlayerCommand[] {
+    const commands = pendingCommands.current;
+    pendingCommands.current = [];
+    return commands;
+  }
 
   function sendCommand(command: PlayerCommand) {
     pendingCommands.current.push(command);
     // Im Pausenmodus Commands sofort anwenden (ohne Simulationsfortschritt),
     // damit Pause/Resume/Auswahl/Editor reagieren.
-    setState((current) => {
-      if (!current.isPaused) {
-        return current;
-      }
-      const commands = pendingCommands.current;
-      pendingCommands.current = [];
-      return applyCommandsWhilePaused(current, commands).state;
-    });
+    if (isPausedRef.current) {
+      const commands = drainCommands();
+      setState((current) => applyCommandsWhilePaused(current, commands).state);
+    }
   }
 
   useEffect(() => {
@@ -29,14 +35,10 @@ export function App() {
       return;
     }
     const interval = window.setInterval(() => {
-      setState((current) => {
-        if (current.isPaused) {
-          return current;
-        }
-        const commands = pendingCommands.current;
-        pendingCommands.current = [];
-        return tick(current, commands).state;
-      });
+      const commands = drainCommands();
+      setState((current) =>
+        current.isPaused ? current : tick(current, commands).state,
+      );
     }, 1000 / state.speed);
     return () => window.clearInterval(interval);
   }, [state.isPaused, state.speed]);
