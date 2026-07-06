@@ -35,6 +35,18 @@ Objektiver Fortschritt: `npm test -- --run` (107 Tests, alle gruen).
   Collector und Roboterfabrik autonom; Spieler startet Produktion per Button;
   Iron Miner spawnt (Tick 253, Score 396), Zielbanner erscheint.
 
+## Ausbaustufen nach MVP
+
+| Stufe | Inhalt | Status |
+|---|---|---|
+| 1 | MVP-Feinschliff (End-Screen, Persistenz, Doku-/P1-Tests) | fertig (126 Tests gruen) |
+| 2 | GitHub-Deployment (Push + Pages via Actions) | gepusht; Pages-Verifikation laeuft |
+| 3 | Doku-Inkrement v111: Expansion 1 Scope (Forschung + Tier-2-Einstieg) | fertig |
+| 4 | Implementierung Expansion 1 (research.ts, Stahlwerk, Energiespeicher, Template-Bibliothek, ResearchPanel, EXP1-Tests) | offen — naechster Schritt |
+
+Expansion-1-Spezifikation: docs/02-mvp/expansion-1-scope.md (Quelleigentuemer),
+EXP1-Konstanten in mvp-constants.md, EXP1-Tests in mvp-test-matrix.md.
+
 ## Offene Punkte / Naechste Schritte
 
 - Deployment-Aktivierung durch den Nutzer: GitHub-Remote setzen, pushen,

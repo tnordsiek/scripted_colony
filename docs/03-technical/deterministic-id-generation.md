@@ -105,6 +105,16 @@ seq3 = Anzahl bereits erfolgreich gespawnter Iron Miner + Anzahl aktuell vorhand
 
 Da im MVP pro Roboterfabrik nur ein ProductionTask gleichzeitig laufen darf und ProductionTasks nicht abgebrochen werden, bleibt diese Sequenz deterministisch. Ein spawnBlocked Task bleibt vorhanden und verhindert einen zweiten gleichzeitigen Task.
 
+### SteelProductionTaskId (Expansion 1)
+
+Muster:
+
+```text
+production.steelPlates.<buildingId>.<seq3>
+```
+
+Sequenzregel: `seq3 = bereits produzierte Steel Plates dieses Gebaeudes + aktive Auftraege + 1`.
+
 ### RobotId fuer gespawnte Roboter
 
 Muster:

@@ -639,7 +639,11 @@ type ProgramTemplateId =
   | "template.mineIronOre"
   | "template.buildSolarCollector"
   | "template.buildRobotFactory"
-  | "template.stasisCharge";
+  | "template.stasisCharge"
+  // Expansion 1 (docs/02-mvp/expansion-1-scope.md):
+  | "template.buildAiResearchCenter"
+  | "template.buildSteelworks"
+  | "template.buildEnergyStorage";
 
 type ProgramExecutionLimit =
   | { type: "unlimited" }
@@ -1369,6 +1373,60 @@ ProductionTask-Fortschritt ist nur zulaessig, wenn startedTick < currentTick.
 Der erste moegliche Fortschritt ist daher Tick N+1.
 ```
 
+## Stahlwerk-Verarbeitung (Expansion 1)
+
+Aktiver Umfang und Materialfluss stehen in `docs/02-mvp/expansion-1-scope.md`.
+
+```ts
+type SteelProductionStatus =
+  | "inProgress"
+  | "outputBlocked";
+
+type SteelProductionBlockedReason =
+  | "insufficientPower"
+  | "cargoFull";
+
+type SteelProductionTask = {
+  id: string;
+  buildingId: BuildingId;
+  cost: ResourceCost; // { ironOre: 2 }
+  costPaid: boolean;
+  totalTicks: number;
+  remainingTicks: number;
+  powerRequired: number;
+  status: SteelProductionStatus;
+  blockedReason?: SteelProductionBlockedReason;
+  createdTick: Tick;
+  startedTick: Tick;
+  completedTick?: Tick;
+};
+```
+
+`Building.steelProductionTask?: SteelProductionTask` gilt nur fuer `steelworks`.
+ID-Muster: `production.steelPlates.<buildingId>.<seq3>` mit
+`seq3 = bereits produzierte Steel Plates dieses Gebaeudes + aktive Auftraege + 1`.
+
+## Forschung (Expansion 1 aktiv)
+
+Der aktive Forschungsumfang steht in `docs/02-mvp/expansion-1-scope.md`; die
+Projektwerte stammen aus `docs/05-future/research-tree.md`.
+
+```ts
+type ResearchState = {
+  activeProjectId?: ResearchProjectId;
+  progress: Partial<Record<ResearchProjectId, number>>;
+  completedProjects: ResearchProjectId[];
+};
+```
+
+Regeln:
+
+```text
+GameState.research ist der kanonische Forschungszustand.
+Fortschritt wird pro Projekt gespeichert; Projektwechsel verwirft nichts.
+Ein Unlock gilt als aktiv, sobald die Projekt-ID in completedProjects steht.
+```
+
 ## Energie und Laden
 
 Die vollständigen Konstanten stehen in `docs/03-technical/mvp-constants.md`.
@@ -1630,6 +1688,16 @@ type GameEventCode =
 
   | "goal.mvpReached"
 
+  | "research.projectSelected"
+  | "research.paused.insufficientPower"
+  | "research.completed"
+
+  | "production.steelPlates.started"
+  | "production.steelPlates.blocked.notEnoughOre"
+  | "production.steelPlates.paused.insufficientPower"
+  | "production.steelPlates.outputBlocked"
+  | "production.steelPlates.completed"
+
   | "debug.command.rejected"
   | "debug.canExecuteAction.result"
   | "debug.build.targetRejected"
@@ -1738,7 +1806,12 @@ type PlayerCommand =
   | { type: "updateProgram"; robotId: RobotId; program: ProgramInstance }
   | { type: "resetProgramToTemplate"; robotId: RobotId; programId: ProgramInstanceId }
   | { type: "startIronMinerProduction"; buildingId: BuildingId }
-  | { type: "resetRun"; seed?: string };
+  | { type: "resetRun"; seed?: string }
+  // Expansion 1:
+  | { type: "selectResearchProject"; projectId: ResearchProjectId }
+  | { type: "startSteelProduction"; buildingId: BuildingId }
+  | { type: "addProgramFromTemplate"; robotId: RobotId; templateId: ProgramTemplateId }
+  | { type: "removeProgram"; robotId: RobotId; programId: ProgramInstanceId };
 
 type CommandResult =
   | { type: "accepted" }
@@ -1774,7 +1847,17 @@ type CommandRejectionReason =
   | "productionAlreadyRunning"
   | "starterRobotMissing"
   | "starterRobotNotConnected"
-  | "notEnoughIronOreInStarterCargo";
+  | "notEnoughIronOreInStarterCargo"
+
+  // Expansion 1: Forschung, Stahlwerk, Template-Bibliothek
+  | "researchCenterMissing"
+  | "unknownResearchProject"
+  | "researchPrerequisiteMissing"
+  | "researchProjectAlreadyCompleted"
+  | "buildingIsNotSteelworks"
+  | "steelProductionAlreadyRunning"
+  | "templateNotUnlocked"
+  | "duplicateProgram";
 ```
 
 
@@ -1820,6 +1903,9 @@ type GameState = {
   score: ScoreState;
   mvpGoalReached: boolean;
 
+  // Expansion 1:
+  research: ResearchState;
+
   // Future-prepared, inactive in MVP:
   materialRequests: MaterialRequest[];
 };
@@ -1854,6 +1940,9 @@ type AssetKey =
   | "robot.ironMiner"
   | "building.solarCollector"
   | "building.robotFactory"
+  | "building.aiResearchCenter"
+  | "building.steelworks"
+  | "building.energyStorage"
   | "building.construction"
   | "ui.selection"
   | "ui.reservation"

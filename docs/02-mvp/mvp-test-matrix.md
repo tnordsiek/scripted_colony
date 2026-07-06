@@ -778,3 +778,32 @@ P0 required Tests sind MVP-blockierend.
 | MVP-DOC-009 | P1 | recommended | Initiales GameEvent | Aktive Dokumente verwenden fuer das initiale Landungs-Event ausschliesslich `id = event.initialLanding` und `code = system.initialLanding` | `docs/03-technical/diagnostics-and-eventlog.md`, `docs/02-mvp/initial-game-state.md` |
 | MVP-DOC-010 | P1 | recommended | Kanonische Typquelle | Vollstaendige TypeScript-Typdefinitionen stehen nur in `canonical-data-model.md`; andere aktive Dokumente fuehren Typbloecke nur als Auszug oder Beispiel | `docs/03-technical/canonical-data-model.md`, `docs/00-documentation-guideline.md` |
 | MVP-DOC-011 | P1 | recommended | Batterie-Einheit | Aktive MVP-Regeltexte verwenden Batteriewerte als absolute Punkte (`Batterie <= 1`, `Batterie >= 50`, `-1 Batterie`); Prozentschreibweisen sind nur als UI-Darstellung oder in Future-Dokumenten zulaessig | `docs/04-systems/units-and-energy.md`, `docs/03-technical/simulation-rules.md`, `docs/03-technical/program-stack-rules.md`, `docs/03-technical/action-executability-matrix.md` |
+
+## Expansion 1: Forschung, Stahlwerk, Energiespeicher, Template-Bibliothek
+
+| Test-ID | Priorität | Status | Bereich | Erwartung | Quelle |
+|---|---:|---|---|---|---|
+| EXP1-RES-001 | P0 | required | Forschung | selectResearchProject akzeptiert nur aktivierte Projekte mit erfuellten Voraussetzungen; sonst unknownResearchProject/researchPrerequisiteMissing | `expansion-1-scope.md` |
+| EXP1-RES-002 | P0 | required | Forschung | Aktives Zentrum + Projekt erzeugt 1 Punkt/Tick ab Tick N+1 und verbraucht 20 Leistung | `expansion-1-scope.md` |
+| EXP1-RES-003 | P0 | required | Forschung | Bei Energiemangel pausiert Forschung ohne Punktverlust (research.paused.insufficientPower) | `expansion-1-scope.md` |
+| EXP1-RES-004 | P0 | required | Forschung | Erreichen der Projektkosten setzt completedProjects, Unlock aktiv, Event research.completed | `expansion-1-scope.md` |
+| EXP1-RES-005 | P0 | required | Forschung | Projektwechsel erhaelt Fortschritt je Projekt; abgeschlossene Projekte nicht erneut waehlbar | `expansion-1-scope.md` |
+| EXP1-RES-006 | P0 | required | Forschung | Ohne aktives Zentrum wird selectResearchProject mit researchCenterMissing abgelehnt | `expansion-1-scope.md` |
+| EXP1-STEEL-001 | P0 | required | Stahlwerk | startSteelProduction zieht 2 Iron Ore aus Starter-Cargo beim Start ab (costPaid = true) | `expansion-1-scope.md` |
+| EXP1-STEEL-002 | P0 | required | Stahlwerk | Timing-Vertrag: Start Tick N, erster Fortschritt N+1, Abschluss ohne Pausen N+10 | `expansion-1-scope.md` |
+| EXP1-STEEL-003 | P0 | required | Stahlwerk | Abschluss legt 1 Steel Plate in Starter-Cargo; bei vollem Cargo Status outputBlocked und Nachholen | `expansion-1-scope.md` |
+| EXP1-STEEL-004 | P0 | required | Stahlwerk | Energiemangel pausiert Verarbeitung ohne Kostenerstattung | `expansion-1-scope.md` |
+| EXP1-STEEL-005 | P0 | required | Stahlwerk | Zweiter Auftrag waehrend laufendem Auftrag wird mit steelProductionAlreadyRunning abgelehnt | `expansion-1-scope.md` |
+| EXP1-STEEL-006 | P0 | required | Stahlwerk | Zu wenig Iron Ore: Ablehnung notEnoughIronOreInStarterCargo ohne Abzug, Event production.steelPlates.blocked.notEnoughOre | `expansion-1-scope.md` |
+| EXP1-ESTOR-001 | P0 | required | Energiespeicher | Ueberschuss laedt Speicher (max 50/Tick, Kapazitaet 200) | `expansion-1-scope.md`, `energy-system.md` |
+| EXP1-ESTOR-002 | P0 | required | Energiespeicher | Defizit entlaedt Speicher (max 50/Tick) und haelt Verbraucher am Laufen | `expansion-1-scope.md`, `energy-system.md` |
+| EXP1-ESTOR-003 | P1 | recommended | Energiespeicher | Mehrere Speicher laden/entladen deterministisch nach BuildingId | `expansion-1-scope.md` |
+| EXP1-BUILD-001 | P0 | required | Gebaeude | Expansion-1-Gebaeude sind mit Expansion-1-Kosten baubar (Forschungszentrum 10 Ore, Stahlwerk 8 Ore, Energiespeicher 4 Steel Plates) | `expansion-1-scope.md` |
+| EXP1-BUILD-002 | P0 | required | Gebaeude | constructionRequired = 2: Gebaeude wird erst nach zwei abgeschlossenen Bauaktionen active | `expansion-1-scope.md` |
+| EXP1-BUILD-003 | P0 | required | Gebaeude | Stahlwerk/Energiespeicher sind erst nach zugehoeriger Forschung baubar (Template locked/nicht verfuegbar) | `expansion-1-scope.md` |
+| EXP1-TPL-001 | P0 | required | Template-Bibliothek | addProgramFromTemplate fuegt freigeschaltetes Template ueber Stasis-Laden ein; templateNotUnlocked/duplicateProgram werden abgelehnt | `expansion-1-scope.md` |
+| EXP1-TPL-002 | P0 | required | Template-Bibliothek | removeProgram entfernt nicht-locked Programme; Stasis-Laden nicht entfernbar (programLocked) | `expansion-1-scope.md` |
+| EXP1-TPL-003 | P1 | recommended | Ausfuehrungslimits | Nach basicAutomation1 ist executionLimit editierbar; Programme mit erreichtem Limit werden uebersprungen | `expansion-1-scope.md` |
+| EXP1-GOAL-001 | P0 | required | Abgrenzung | Expansion 1 vergibt keinen Score und aendert goal.mvpReached nicht | `expansion-1-scope.md` |
+| EXP1-E2E-001 | P0 | required | End-to-End | Ein Run erreicht: Forschungszentrum aktiv -> metalProcessing1 erforscht -> Stahlwerk gebaut -> erste Steel Plate im Cargo | `expansion-1-scope.md` |
+| EXP1-DOC-001 | P1 | recommended | Doku | expansion-1-scope.md ist Quelleigentuemer des Expansion-1-Umfangs und in der Guideline-Tabelle eingetragen | `docs/00-documentation-guideline.md` |

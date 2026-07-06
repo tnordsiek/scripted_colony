@@ -202,12 +202,15 @@ starterRobot und ironMiner duerfen nicht denselben Fallback verwenden.
 |---|---|---|
 | `building.solarCollector` | Gebaeudefeld mit Solarpanel-Symbol | eindeutig von Roboterfabrik unterscheidbar |
 | `building.robotFactory` | Fabrik-/Werkstatt-Symbol | eindeutig von Solar Collector unterscheidbar |
+| `building.aiResearchCenter` | Gebaeudefeld mit Forschungs-/Antennensymbol (violett) | Expansion 1; eindeutig unterscheidbar |
+| `building.steelworks` | Gebaeudefeld mit Schmelz-/Ambosssymbol (dunkelrot) | Expansion 1; eindeutig unterscheidbar |
+| `building.energyStorage` | Gebaeudefeld mit Batteriesymbol (gruen) | Expansion 1; eindeutig unterscheidbar |
 | `building.construction` | halbtransparente Gebaeudeform + Baustellenrahmen | darf nicht wie active aussehen |
 
 Regel:
 
 ```text
-Solar Collector und Roboterfabrik muessen visuell unterscheidbar sein.
+Alle aktiven Gebaeudetypen muessen visuell unterscheidbar sein.
 status = construction darf nicht gleich aussehen wie status = active.
 ```
 

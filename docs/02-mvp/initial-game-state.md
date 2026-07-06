@@ -563,6 +563,18 @@ Regel:
 standardRobot ist kein kanonischer RobotType und darf im Startzustand nicht vorkommen.
 ```
 
+## Start-Forschungszustand (Expansion 1)
+
+```ts
+const initialResearch: ResearchState = {
+  activeProjectId: undefined,
+  progress: {},
+  completedProjects: [],
+};
+```
+
+Der Startzustand enthaelt kein KI-Forschungszentrum und keinen Forschungsfortschritt.
+
 ## Abgrenzung: Iron-Miner-Spawnwerte
 
 Der Iron Miner ist nicht Teil des initialen GameState. Er entsteht erst durch erfolgreichen Spawn nach Produktionsabschluss.

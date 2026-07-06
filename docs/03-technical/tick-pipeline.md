@@ -97,11 +97,20 @@ freePower = powerProvided - powerRequired
 
 Nur Tasks mit `status = inProgress` und `startedTick < currentTick` zaehlen in `powerRequired`. Ein in Schritt 1 desselben Ticks neu erzeugter `ProductionTask` ist fuer diesen EnergySnapshot noch nicht fortschrittsberechtigt und erzeugt noch keinen aktuellen Tick-Bedarf.
 
-Gebaeudeenergie ist im MVP nur fuer ProductionTasks relevant.
+Gebaeudeenergie ist im MVP nur fuer ProductionTasks relevant. In Expansion 1 zaehlen
+zusaetzlich fortschrittsberechtigte Stahlwerk-Auftraege und aktive Forschung in
+`powerRequired`; aktive Energiespeicher gleichen Defizit/Ueberschuss nach der
+Speicherregel in `docs/02-mvp/expansion-1-scope.md` aus.
 
 Externe Roboterladung wird im MVP nicht verarbeitet. Es gibt daher keine Priorisierung zwischen Produktion und Roboterladung.
 
 ## 3. ProductionTasks verarbeiten
+
+Expansion-1-Erweiterung: Schritt 3 verarbeitet alle Gebaeudetasks in fester Reihenfolge —
+pro Gebaeude nach BuildingId sortiert, je Gebaeude erst `ProductionTask`, dann
+`SteelProductionTask`, dann Forschungsfortschritt. Der Timing-Vertrag
+(`startedTick < currentTick`) gilt fuer alle drei gleichermassen; die Fachregeln stehen
+in `docs/02-mvp/expansion-1-scope.md`.
 
 Verarbeitet werden nur fortschrittsberechtigte `ProductionTask`s:
 

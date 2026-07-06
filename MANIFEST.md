@@ -2,25 +2,28 @@
 
 ## Zweck dieser Version
 
-Dieses Paket ist Version v110. Es basiert auf v109 und setzt die beschlossenen Konsistenzkorrekturen aus der inhaltlichen Prüfung von v109 um.
+Dieses Paket ist Version v111. Es basiert auf v110 und definiert Expansion 1
+(Forschung + Tier-2-Einstieg) in `docs/02-mvp/expansion-1-scope.md`.
+
+Das Repository enthaelt zusaetzlich die MVP-Implementierung (`src/`, `tests/`,
+`package.json`, `.github/workflows/deploy.yml`); dieses Manifest listet den
+Dokumentationsinhalt.
 
 ## Änderung dieser Version
 
 ```text
-Batterie-Einheit kanonisch als absolute Batteriepunkte definiert
-Prozentschreibweisen fuer Batteriewerte in aktiven MVP-Regeltexten auf Punkte umgestellt
-Quellenabgrenzung units-and-energy.md vs. robot-battery-and-charging.md dokumentiert
-Quelleigentuemer-Tabelle um Roboterbatterie-Themenbereiche erweitert
-Score-Konstanten in mvp-constants.md gespiegelt
-Spawnfeld-Tie-Break-Verweis in simulation-rules.md ergaenzt
-Iron-Miner-Spawnwerte-Abgrenzung in initial-game-state.md ergaenzt
-Testmatrix-Eintraege MVP-DOC-009/010 nachgetragen und MVP-DOC-011 ergaenzt
-v109-Berichtsdateien nach docs/archive verschoben
+Expansion-1-Scope-Dokument neu (Quelleigentuemer Expansion 1)
+Aktiviert: Forschungszentrum, 4 Forschungsprojekte, Stahlwerk + Rezept,
+Energiespeicher, steelPlates, Template-Bibliothek, Ausfuehrungslimits
+Bootstrap-Kostenregel ohne Steel-/Silicon-Zirkularitaet
+Datenmodell-, Konstanten-, Pipeline-, Energie-, Asset- und Testmatrix-Erweiterungen
+v110-Berichtsdateien nach docs/archive verschoben
 ```
 
 ## Nicht geändert
 
-Keine Siegbedingung, Produktionskosten, Produktionsdauer, Tick-Reihenfolge, RNG-Algorithmus, Build-Regel oder UI-Fachregel wurden geändert. Die Batteriewerte sind numerisch identisch geblieben (batteryMax = 100).
+Keine MVP-Regel wurde geändert (Siegbedingung, Score, Batterie, Bewegung, Mining,
+Bau, Produktion, Startzustand); additiv startet `GameState.research` leer.
 
 ## Quellenpriorität und Archivregel
 
@@ -39,12 +42,14 @@ Bei Konflikten zwischen aktiven Dokumenten gilt der Quelleigentuemer je Themenbe
 ```text
 AGENTS.md
 CHANGELOG.md
+IMPLEMENTATION-STATUS.md
 MANIFEST.md
 README.md
 docs/00-documentation-guideline.md
 docs/01-product/design-pillars.md
 docs/01-product/vision-and-core-loop.md
 docs/02-mvp/acceptance-criteria.md
+docs/02-mvp/expansion-1-scope.md
 docs/02-mvp/implementation-plan.md
 docs/02-mvp/initial-game-state.md
 docs/02-mvp/mvp-and-tech-stack.md
@@ -91,10 +96,12 @@ docs/archive/README.md
 docs/archive/canonical-data-model-consistency-check-v44.md
 docs/archive/readme-history-v84.md
 docs/archive/roboter_logikspiel_konsistenzbericht_v109.md
+docs/archive/roboter_logikspiel_konsistenzbericht_v110.md
 docs/archive/roboter_logikspiel_konzept_zwischenstand_v109.md
+docs/archive/roboter_logikspiel_konzept_zwischenstand_v110.md
 docs/archive/v21-legacy/game-concept.md
 docs/archive/v21-legacy/mvp-implementation-plan.md
 docs/archive/v21-legacy/technical-guidelines.md
-roboter_logikspiel_konsistenzbericht_v110.md
-roboter_logikspiel_konzept_zwischenstand_v110.md
+roboter_logikspiel_konsistenzbericht_v111.md
+roboter_logikspiel_konzept_zwischenstand_v111.md
 ```

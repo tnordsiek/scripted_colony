@@ -150,6 +150,35 @@ const MVP_SCORE_GOAL_BONUS = 200;
 
 Score und Zielbonus fuer den Iron Miner werden erst nach erfolgreichem Spawn vergeben, nicht bei Produktionsstart, `readyToSpawn` oder `spawnBlocked`.
 
+## Expansion 1 (docs/02-mvp/expansion-1-scope.md)
+
+```ts
+const EXP1_AI_RESEARCH_CENTER_COST_IRON_ORE = 10;
+const EXP1_AI_RESEARCH_CENTER_HP = 150;
+const EXP1_AI_RESEARCH_CENTER_CONSTRUCTION_REQUIRED = 2;
+const EXP1_RESEARCH_POINTS_PER_TICK = 1;
+const EXP1_RESEARCH_POWER_REQUIRED = 20;
+
+const EXP1_STEELWORKS_COST_IRON_ORE = 8;
+const EXP1_STEELWORKS_HP = 180;
+const EXP1_STEELWORKS_CONSTRUCTION_REQUIRED = 2;
+const EXP1_STEEL_RECIPE_INPUT_IRON_ORE = 2;
+const EXP1_STEEL_RECIPE_OUTPUT_STEEL_PLATES = 1;
+const EXP1_STEEL_RECIPE_TICKS = 10;
+const EXP1_STEEL_RECIPE_POWER_REQUIRED = 30;
+
+const EXP1_ENERGY_STORAGE_COST_STEEL_PLATES = 4;
+const EXP1_ENERGY_STORAGE_HP = 150;
+const EXP1_ENERGY_STORAGE_CONSTRUCTION_REQUIRED = 2;
+const EXP1_ENERGY_STORAGE_CAPACITY = 200;
+const EXP1_ENERGY_STORAGE_MAX_CHARGE_RATE = 50;
+const EXP1_ENERGY_STORAGE_MAX_DISCHARGE_RATE = 50;
+```
+
+Forschungskosten der aktivierten Projekte stehen in `docs/05-future/research-tree.md`
+(basicAutomation1 = 200, metalProcessing1 = 300, energyDistribution1 = 250,
+energyBuffer1 = 500) und werden nicht dupliziert.
+
 ## Eventlog
 
 ```ts

@@ -19,6 +19,9 @@ Finale Assets koennen vom Nutzer bereitgestellt werden. Fuer die MVP-Abnahme ist
 | `robot.ironMiner` | ja | ja | ja |
 | `building.solarCollector` | ja | ja | ja |
 | `building.robotFactory` | ja | ja | ja |
+| `building.aiResearchCenter` | ja | ja | ja (Expansion 1) |
+| `building.steelworks` | ja | ja | ja (Expansion 1) |
+| `building.energyStorage` | ja | ja | ja (Expansion 1) |
 | `building.construction` | optional | ja | ja |
 | `ui.selection` | optional | ja | ja |
 | `ui.reservation` | optional | ja | ja |

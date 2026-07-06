@@ -1,5 +1,20 @@
 # Changelog
 
+## v111 - Expansion 1 definiert (Forschung + Tier-2-Einstieg)
+
+- Neues Scope-Dokument `docs/02-mvp/expansion-1-scope.md` als Quelleigentuemer fuer den Expansion-1-Umfang; in der Quelleigentuemer-Tabelle eingetragen.
+- Aktiviert: KI-Forschungszentrum, Forschung mit vier Projekten (basicAutomation1, metalProcessing1, energyDistribution1, energyBuffer1), Stahlwerk mit Rezept 2 Iron Ore -> 1 Steel Plate, Energiespeicher als globaler Pool-Puffer, Ressource steelPlates, Template-Bibliothek (addProgramFromTemplate/removeProgram), Ausfuehrungslimits nach basicAutomation1.
+- Bootstrap-Kostenregel: Expansion-1-Baukosten ohne Steel-Plate-/Silicon-Zirkularitaet (Forschungszentrum 10 Iron Ore, Stahlwerk 8 Iron Ore, Energiespeicher 4 Steel Plates); Future-Werte in building-and-unit-tiers.md bleiben Rebalancing-Referenz.
+- Bewusst nicht aktiviert: Logistik/Transportroboter, Ressourcenspeicher, Grid Energy Line, Kommunikationsgrid-Wirkung, weitere Einheiten, Gas/Silicon, Combat/Hazards.
+- `canonical-data-model.md`: ResearchState + GameState.research, SteelProductionTask, neue PlayerCommands, CommandRejectionReasons, GameEventCodes, AssetKeys, ProgramTemplateIds.
+- `mvp-constants.md`: EXP1_*-Konstanten; `deterministic-id-generation.md`: SteelProductionTaskId-Muster.
+- `tick-pipeline.md` Schritt 3 verarbeitet Gebaeudetasks (Produktion, Stahlwerk, Forschung); EnergySnapshot mit Energiespeicher-Regel; `energy-system.md` entsprechend ergaenzt.
+- `initial-game-state.md`: initialer ResearchState (leer).
+- Assets: `building.aiResearchCenter`, `building.steelworks`, `building.energyStorage` in Inventar und Fallback-Katalog.
+- Testmatrix um EXP1-Serie erweitert (RES, STEEL, ESTOR, BUILD, TPL, GOAL, E2E, DOC).
+- v110-Berichtsdateien nach `docs/archive/` verschoben; README, AGENTS, MANIFEST, Guideline auf v111.
+- Keine MVP-Regel geaendert (Siegbedingung, Score, Batterie, Bewegung, Mining, Bau, Produktion, Startzustand unveraendert; additiv: GameState.research startet leer).
+
 ## v110 - Konsistenzkorrekturen nach inhaltlicher Pruefung umgesetzt
 
 - Batterie-Einheit kanonisch als absolute Batteriepunkte in `docs/04-systems/units-and-energy.md` definiert; alle MVP-Robotertypen verwenden `batteryMax = 100`, 1 Punkt = 1 %.

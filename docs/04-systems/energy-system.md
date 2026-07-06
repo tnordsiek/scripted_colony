@@ -294,6 +294,19 @@ Roboterladung aus Power-Pool
 
 `MVP-FUT-005` ist damit eindeutig als Future-Thema definiert: Lokale Energienetze sind nicht ungeklärt, sondern bewusst nicht MVP-aktiv. Die MVP-Topologie ist der globale Power-Pool.
 
+## Expansion-1-Erweiterungen
+
+Expansion 1 (`docs/02-mvp/expansion-1-scope.md`) erweitert den globalen Power-Pool,
+ohne lokale Netze einzufuehren:
+
+```text
+Neue Verbraucher: Stahlwerk-Verarbeitung (30) und aktive Forschung (20),
+beide mit ProductionTask-analogem Timing und Pausierung bei Energiemangel.
+Energiespeicher puffern den globalen Pool: Entladen bei Defizit, Laden bei
+Ueberschuss, je Tick maximal 50 pro Speicher, Kapazitaet 200,
+Reihenfolge deterministisch nach BuildingId.
+```
+
 ## Akzeptanzkriterium
 
 Das Akzeptanzkriterium ist erfüllt, wenn:

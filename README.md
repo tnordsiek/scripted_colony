@@ -2,19 +2,19 @@
 
 ## Aktueller Stand
 
-Dieses Paket ist Version v110. Es basiert auf v109 und setzt die Konsistenzkorrekturen aus der inhaltlichen Prüfung von v109 um.
+Dieses Paket ist Version v111. Es basiert auf v110 und definiert Expansion 1
+(Forschung + Tier-2-Einstieg). Das MVP ist vollstaendig implementiert (src/, tests/)
+und wird ueber GitHub Pages deployt; Wiedereinstieg siehe IMPLEMENTATION-STATUS.md.
 
-Kern der Korrektur:
+Kern von v111:
 
 ```text
-Batterie-Einheit kanonisch als absolute Batteriepunkte definiert
-Prozentschreibweisen fuer Batteriewerte in aktiven MVP-Regeltexten auf Punkte umgestellt
-Quellenabgrenzung units-and-energy.md vs. robot-battery-and-charging.md dokumentiert
-Score-Konstanten in mvp-constants.md gespiegelt
-Spawnfeld-Tie-Break-Verweis in simulation-rules.md ergaenzt
-Iron-Miner-Spawnwerte-Abgrenzung in initial-game-state.md ergaenzt
-Fehlende Testmatrix-Eintraege MVP-DOC-009/010 nachgetragen, MVP-DOC-011 ergaenzt
-v109-Berichtsdateien nach docs/archive verschoben
+Neues Scope-Dokument docs/02-mvp/expansion-1-scope.md (Quelleigentuemer Expansion 1)
+Aktiviert: KI-Forschungszentrum, Forschung (4 Projekte), Stahlwerk + Rezept,
+Energiespeicher, Ressource steelPlates, Template-Bibliothek, Ausfuehrungslimits
+Bootstrap-Kosten ohne Steel-/Silicon-Zirkularitaet definiert
+Datenmodell: ResearchState, SteelProductionTask, neue Commands/Events/AssetKeys
+Testmatrix um EXP1-Serie erweitert
 ```
 
 Kurzregel:
@@ -89,6 +89,7 @@ Assets: AssetRegistry partiell, FallbackAssetRegistry vollstaendig, resolveAsset
 Batterie-Einheit: absolute Punkte, batteryMax = 100 fuer alle MVP-Robotertypen; kanonisch in docs/04-systems/units-and-energy.md
 Score-Werte: +1 Ore, +25 Solar Collector, +50 Roboterfabrik, +100 Spawn, +200 Zielbonus; Regelquelle docs/04-systems/scoring-and-win-conditions.md
 Tie-Breaks: seeded deterministic nach docs/03-technical/seeded-rng.md (scoutTarget, mineAdjacentOre, buildSite, spawnSite)
+Expansion-1-Umfang: docs/02-mvp/expansion-1-scope.md ist kanonisch
 ```
 
 ## Wichtige Einstiegspunkte

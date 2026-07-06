@@ -2,7 +2,7 @@
 
 ## Aktuelle Basis
 
-Arbeite auf Basis von Paket v110. v110 basiert auf v109 und enthält die Konsistenzkorrekturen aus der inhaltlichen Prüfung von v109.
+Arbeite auf Basis von Paket v111. v111 basiert auf v110 und definiert Expansion 1 (Forschung + Tier-2-Einstieg) in `docs/02-mvp/expansion-1-scope.md`. Das MVP ist implementiert; Implementierungsstand und Wiedereinstieg stehen in `IMPLEMENTATION-STATUS.md`.
 
 Kurzfassung:
 
@@ -42,7 +42,7 @@ Implementiere zuerst den MVP des Roboter-Logikspiels. Verwende die Langfristvisi
 Diese Liste ist die wichtigste Arbeitsliste fuer MVP-Implementierung. Fuer Konflikte und weitere Quelleigentuemer gilt die Quellenprioritaet in `docs/00-documentation-guideline.md`.
 
 1. `docs/00-documentation-guideline.md`
-2. `docs/02-mvp/mvp-and-tech-stack.md`
+2. `docs/02-mvp/mvp-and-tech-stack.md` (MVP) und `docs/02-mvp/expansion-1-scope.md` (Expansion 1)
 3. `docs/02-mvp/implementation-plan.md`
 4. `docs/02-mvp/acceptance-criteria.md`
 5. `docs/02-mvp/mvp-test-matrix.md`
