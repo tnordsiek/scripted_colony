@@ -2,8 +2,9 @@
 
 ## Zweck dieser Version
 
-Dieses Paket ist Version v111. Es basiert auf v110 und definiert Expansion 1
-(Forschung + Tier-2-Einstieg) in `docs/02-mvp/expansion-1-scope.md`.
+Dieses Paket ist Version v112. Es basiert auf v111 und definiert Expansion 2
+(Logistik + Ladenetz) in `docs/02-mvp/expansion-2-scope.md`. Zuvor: v111 definierte
+Expansion 1 (Forschung + Tier-2-Einstieg) in `docs/02-mvp/expansion-1-scope.md`.
 
 Das Repository enthaelt zusaetzlich die MVP-Implementierung (`src/`, `tests/`,
 `package.json`, `.github/workflows/deploy.yml`); dieses Manifest listet den
@@ -12,18 +13,19 @@ Dokumentationsinhalt.
 ## Änderung dieser Version
 
 ```text
-Expansion-1-Scope-Dokument neu (Quelleigentuemer Expansion 1)
-Aktiviert: Forschungszentrum, 4 Forschungsprojekte, Stahlwerk + Rezept,
-Energiespeicher, steelPlates, Template-Bibliothek, Ausfuehrungslimits
-Bootstrap-Kostenregel ohne Steel-/Silicon-Zirkularitaet
-Datenmodell-, Konstanten-, Pipeline-, Energie-, Asset- und Testmatrix-Erweiterungen
-v110-Berichtsdateien nach docs/archive verschoben
+Expansion-2-Scope-Dokument neu (Quelleigentuemer Expansion 2)
+Aktiviert: MaterialRequests (3 Typen), Transportroboter, Ressourcenspeicher,
+begehbare Grid Energy Line, Ladenetz (externes Laden), Stahlwerk-Inventare mit
+Auto-Modus, Iron Miner aktiv
+ChargingTask und LogisticsTask in der aktiven RobotTask-Union
+Konstanten-, ID-, Pipeline-, Asset- und Testmatrix-Erweiterungen (EXP2-Serie)
+v111-Berichtsdateien nach docs/archive verschoben
 ```
 
 ## Nicht geändert
 
-Keine MVP-Regel wurde geändert (Siegbedingung, Score, Batterie, Bewegung, Mining,
-Bau, Produktion, Startzustand); additiv startet `GameState.research` leer.
+Keine MVP- oder Expansion-1-Regel wurde geändert; alle Erweiterungen sind additiv.
+Der Startzustand bleibt unveraendert (materialRequests leer, research leer).
 
 ## Quellenpriorität und Archivregel
 
@@ -50,6 +52,7 @@ docs/01-product/design-pillars.md
 docs/01-product/vision-and-core-loop.md
 docs/02-mvp/acceptance-criteria.md
 docs/02-mvp/expansion-1-scope.md
+docs/02-mvp/expansion-2-scope.md
 docs/02-mvp/implementation-plan.md
 docs/02-mvp/initial-game-state.md
 docs/02-mvp/mvp-and-tech-stack.md
@@ -102,6 +105,8 @@ docs/archive/roboter_logikspiel_konzept_zwischenstand_v110.md
 docs/archive/v21-legacy/game-concept.md
 docs/archive/v21-legacy/mvp-implementation-plan.md
 docs/archive/v21-legacy/technical-guidelines.md
-roboter_logikspiel_konsistenzbericht_v111.md
-roboter_logikspiel_konzept_zwischenstand_v111.md
+docs/archive/roboter_logikspiel_konsistenzbericht_v111.md
+docs/archive/roboter_logikspiel_konzept_zwischenstand_v111.md
+roboter_logikspiel_konsistenzbericht_v112.md
+roboter_logikspiel_konzept_zwischenstand_v112.md
 ```

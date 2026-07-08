@@ -807,3 +807,35 @@ P0 required Tests sind MVP-blockierend.
 | EXP1-GOAL-001 | P0 | required | Abgrenzung | Expansion 1 vergibt keinen Score und aendert goal.mvpReached nicht | `expansion-1-scope.md` |
 | EXP1-E2E-001 | P0 | required | End-to-End | Ein Run erreicht: Forschungszentrum aktiv -> metalProcessing1 erforscht -> Stahlwerk gebaut -> erste Steel Plate im Cargo | `expansion-1-scope.md` |
 | EXP1-DOC-001 | P1 | recommended | Doku | expansion-1-scope.md ist Quelleigentuemer des Expansion-1-Umfangs und in der Guideline-Tabelle eingetragen | `docs/00-documentation-guideline.md` |
+
+## Expansion 2: Logistik und Ladenetz
+
+Regelquelle: `docs/02-mvp/expansion-2-scope.md`.
+
+| Test-ID | Priorität | Status | Bereich | Erwartung | Quelle |
+|---|---:|---|---|---|---|
+| EXP2-RES-001 | P0 | required | Forschung | `research.transportLogistics1` erfordert `metalProcessing1`, kostet 500 und schaltet Speicher/Gridline/Transporter/Logistik frei | `expansion-2-scope.md` |
+| EXP2-BUILD-001 | P0 | required | Gebaeude | Ressourcenspeicher ist nach Unlock baubar (3 Steel Plates, 2 Bauaktionen) und hat storage-Inventar Kapazitaet 100 | `expansion-2-scope.md` |
+| EXP2-BUILD-002 | P0 | required | Gebaeude | Gridline ist baubar (1 Steel Plate, 1 Bauaktion) nur orthogonal an ein Energienetz-Element | `expansion-2-scope.md` |
+| EXP2-BUILD-003 | P0 | required | Bewegung | Gridline-Felder sind begehbar; Roboter koennen sie durchqueren | `expansion-2-scope.md` |
+| EXP2-CHG-001 | P0 | required | Ladenetz | Ladezonen: neben Solar/Energiespeicher, auf und neben Gridline | `expansion-2-scope.md` |
+| EXP2-CHG-002 | P0 | required | Ladenetz | charging-Task laedt +5/Tick und verbraucht 5 Leistung; pausiert ohne Leistung ohne Batterieverlust | `expansion-2-scope.md` |
+| EXP2-CHG-003 | P0 | required | Ladenetz | action.charge plant Weg zur naechsten Ladezone (Commitment) und endet bei targetBattery | `expansion-2-scope.md` |
+| EXP2-CHG-004 | P0 | required | Ladenetz | Ladeverbraucher kommen nach Gebaeudeverbrauchern, Reihenfolge nach RobotId | `expansion-2-scope.md` |
+| EXP2-TRANS-001 | P0 | required | Produktion | startTransportRobotProduction zieht 4 Steel Plates aus Starter-Cargo; Timing-/Spawnregeln wie Iron Miner | `expansion-2-scope.md` |
+| EXP2-TRANS-002 | P0 | required | Produktion | Transporter spawnt mit Batterie 80/120, Cargo 30 und Stack logistics + rechargeAtGrid | `expansion-2-scope.md` |
+| EXP2-MINER-001 | P0 | required | Iron Miner | Neu gespawnte Iron Miner erhalten Stack mineIronOre + rechargeAtGrid und minen autonom | `expansion-2-scope.md` |
+| EXP2-INV-001 | P0 | required | Stahlwerk | Auto-Modus startet Verarbeitung bei input >= 2 und freiem Output; Ergebnis landet im output-Inventar | `expansion-2-scope.md` |
+| EXP2-REQ-001 | P0 | required | Requests | supplyBuildingInput entsteht bei Stahlwerk-Input < 2; Menge min(4, freie Kapazitaet) | `expansion-2-scope.md` |
+| EXP2-REQ-002 | P0 | required | Requests | clearBuildingOutput entsteht bei Stahlwerk-Output > 0 mit Ziel Speicher | `expansion-2-scope.md` |
+| EXP2-REQ-003 | P0 | required | Requests | moveToStorage entsteht bei Arbeitsroboter-Cargo >= 80 % | `expansion-2-scope.md` |
+| EXP2-REQ-004 | P0 | required | Requests | Quellenprioritaet Speicher > Gebaeude-Output > Roboter-Cargo; Quelle und Menge werden gebunden und reserviert | `expansion-2-scope.md` |
+| EXP2-REQ-005 | P0 | required | Requests | Keine Teillieferungen: fehlende Menge/Zielkapazitaet fuehrt zu blocked mit konkretem Grund, Reservierung freigegeben | `expansion-2-scope.md` |
+| EXP2-REQ-006 | P0 | required | Requests | Zuweisung: freie Transporter nach RobotId, Requests nach Prioritaet/createdTick/RequestId; Commitment bis fulfilled/blocked | `expansion-2-scope.md` |
+| EXP2-REQ-007 | P0 | required | Requests | Request-Ids folgen request.<typ>.<tick6>.<seq2> | `deterministic-id-generation.md` |
+| EXP2-LOG-001 | P0 | required | LogisticsTask | Phasen moveToPickup -> pickup (1 Tick) -> moveToDelivery -> delivery (1 Tick); Pickup/Delivery ohne Batteriekosten | `expansion-2-scope.md` |
+| EXP2-LOG-002 | P0 | required | LogisticsTask | Blockade beim Ziel: Request blocked, Ressourcen bleiben im Roboter-Cargo, Neubewertung im Folgetick | `expansion-2-scope.md` |
+| EXP2-E2E-001 | P0 | required | End-to-End | Nach Setup (Forschung, Speicher, Gridline, 1 Transporter) produziert die Kette ohne weitere Commands mindestens 3 Steel Plates; kein Roboter faellt dauerhaft aus | `expansion-2-scope.md` |
+| EXP2-E2E-002 | P0 | required | Determinismus | Zwei identische Laeufe liefern identische Endzustaende (Snapshot) | `expansion-2-scope.md` |
+| EXP2-E2E-003 | P1 | recommended | Livelock-Waechter | 3000-Tick-Langlauf ohne Deadlock: Steel-Plate-Bestand waechst weiter | `expansion-2-scope.md` |
+| EXP2-DOC-001 | P1 | recommended | Doku | tick-pipeline.md dokumentiert die Schritt-3-Erweiterung 3a-3d | `tick-pipeline.md` |

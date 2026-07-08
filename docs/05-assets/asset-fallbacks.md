@@ -220,6 +220,9 @@ status = construction darf nicht gleich aussehen wie status = active.
 |---|---|---|
 | `ui.productionPaused` | Warnsymbol oder Textstatus im Panel | Textstatus reicht |
 | `ui.spawnBlocked` | Warnsymbol oder Textstatus im Panel | Textstatus reicht |
+| `building.resourceStorage` | Gebaeudefeld mit Lager-/Kistensymbol (Expansion 2) | unterscheidbar von anderen Gebaeuden |
+| `building.gridEnergyLine` | schmale Leitungs-Leiste auf dem Feld (Expansion 2) | begehbar erkennbar, kein Vollfeld |
+| `robot.transportRobot` | kompakter Transporter-Marker (Expansion 2) | unterscheidbar von Starter und Iron Miner |
 
 MVP-Minimum:
 

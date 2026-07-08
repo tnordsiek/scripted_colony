@@ -1,5 +1,32 @@
 # Changelog
 
+## v112 - Expansion 2 definiert: Logistik und Ladenetz
+
+- `docs/02-mvp/expansion-2-scope.md` als Quelleigentuemer fuer Expansion 2 angelegt:
+  MaterialRequest-Engine (supplyBuildingInput, clearBuildingOutput, moveToStorage),
+  Transportroboter (Produktion durch die normale Roboterfabrik, 4 Steel Plates),
+  Ressourcenspeicher und begehbare Grid Energy Line, Ladenetz (externes Laden an
+  Energie-Gebaeuden und Gridlines, 5 Batterie/Tick fuer 5 Leistung), Stahlwerk-
+  Inventare mit Auto-Modus, Iron Miner wird aktiv (Spawn-Stack).
+- Kanonisches Datenmodell erweitert: ChargingTask und LogisticsTask in der aktiven
+  RobotTask-Union, startTransportRobotProduction-Command, neue Event-Codes
+  (production.transportRobot.*, logistics.request.*, action.charge.*), neue
+  AssetKeys (building.resourceStorage, building.gridEnergyLine, robot.transportRobot),
+  vier neue ProgramTemplateIds; Kommentar-Tippfehler in der Template-Union korrigiert.
+- `mvp-constants.md` um EXP2_*-Konstanten ergaenzt; `deterministic-id-generation.md`
+  um das MaterialRequestId-Muster request.<typ>.<tick6>.<seq2>; `tick-pipeline.md`
+  dokumentiert die Schritt-3-Erweiterung 3a-3d (schliesst die offene Pipeline-Luecke).
+- Scope-Entscheidungen dokumentiert: Ladenetz statt selfCharging-Umstellung
+  (Nutzerentscheid), Transporter aus normaler Fabrik (Silicon-Zirkularitaet),
+  supplyConstruction bleibt Future, keine Teillieferungen, Commitment-Regeln fuer
+  Quellen-/Roboterbindung (Learning aus Expansion 1).
+- Testmatrix um die EXP2-Serie erweitert (24 P0, 2 P1 inkl. Livelock-Waechter).
+- Asset-Inventar und Fallback-Tabelle um drei Expansion-2-Assets ergaenzt.
+- README.md, AGENTS.md, MANIFEST.md, Leitlinie und Berichte auf v112; v111-Berichte
+  nach docs/archive verschoben.
+- Keine MVP- oder Expansion-1-Regel geaendert; alle Erweiterungen sind additiv.
+
+
 ## v111 - Expansion 1 definiert (Forschung + Tier-2-Einstieg)
 
 - Neues Scope-Dokument `docs/02-mvp/expansion-1-scope.md` als Quelleigentuemer fuer den Expansion-1-Umfang; in der Quelleigentuemer-Tabelle eingetragen.

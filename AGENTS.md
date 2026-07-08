@@ -2,7 +2,7 @@
 
 ## Aktuelle Basis
 
-Arbeite auf Basis von Paket v111. v111 basiert auf v110 und definiert Expansion 1 (Forschung + Tier-2-Einstieg) in `docs/02-mvp/expansion-1-scope.md`. Das MVP ist implementiert; Implementierungsstand und Wiedereinstieg stehen in `IMPLEMENTATION-STATUS.md`.
+Arbeite auf Basis von Paket v112. v112 basiert auf v111 und definiert Expansion 2 (Logistik + Ladenetz) in `docs/02-mvp/expansion-2-scope.md`; Expansion 1 (Forschung + Tier-2-Einstieg) steht in `docs/02-mvp/expansion-1-scope.md`. Das MVP ist implementiert; Implementierungsstand und Wiedereinstieg stehen in `IMPLEMENTATION-STATUS.md`.
 
 Kurzfassung:
 

@@ -137,7 +137,7 @@ Wenn ein Feature Backend, Accounts, Multiplayer, Cloud Saves oder serverseitige 
 
 ## Geltungsbereich
 
-v111 ist der aktuelle bereinigte Dokumentationsstand. Fuer weitere Planung und Implementierung gilt:
+v112 ist der aktuelle bereinigte Dokumentationsstand. Fuer weitere Planung und Implementierung gilt:
 
 - aktive Dokumente ausserhalb `docs/archive/` sind verbindlich
 - Archivdokumente sind nur Historie und nicht implementierungsverbindlich
@@ -235,6 +235,7 @@ roboter_logikspiel_konzept_zwischenstand_v*.md:
 |---|---|---|
 | Dokumentationsregeln, Archivregel, Quellenprioritaet | `docs/00-documentation-guideline.md` | `README.md`, `AGENTS.md` |
 | MVP-Umfang, Nicht-MVP-Abgrenzung, Tech-Stack | `docs/02-mvp/mvp-and-tech-stack.md` | `README.md`, `AGENTS.md`, `docs/01-product/**`, `docs/05-future/**` |
+| Expansion-2-Umfang (Logistik, Ladenetz) | `docs/02-mvp/expansion-2-scope.md` | `docs/05-future/logistics-system.md`, `docs/04-systems/resources-and-logistics.md` |
 | Expansion-1-Umfang und aktivierte Werte | `docs/02-mvp/expansion-1-scope.md` | `docs/05-future/research-tree.md`, `docs/05-future/building-and-unit-tiers.md` |
 | Projekt- und Modulstruktur der Implementierung | `docs/03-technical/implementation-module-structure.md` | `docs/02-mvp/mvp-and-tech-stack.md`, `docs/02-mvp/implementation-plan.md`, UI-Systemdokumente |
 | MVP-Akzeptanz auf Produktebene | `docs/02-mvp/acceptance-criteria.md` | `docs/02-mvp/mvp-test-matrix.md`, Systemdokumente |

@@ -71,7 +71,7 @@ const MVP_IRON_MINER_CARGO_CAPACITY = 10;
 const MVP_IRON_MINER_SIGHT_RANGE = 2;
 ```
 
-Der Iron Miner ist `goalOnly`: Er muss nach Spawn als `Robot`-Entity existieren, muss im MVP aber keine eigene produktive Programmlogik erhalten.
+Der Iron Miner ist im MVP `goalOnly`: Er muss nach Spawn als `Robot`-Entity existieren, muss im MVP aber keine eigene produktive Programmlogik erhalten. Ab Expansion 2 wird er aktiv (docs/02-mvp/expansion-2-scope.md).
 
 ## Gebäudesicht
 
@@ -123,7 +123,7 @@ const MVP_STASIS_TARGET_BATTERY = 50;
 const MVP_SELF_CHARGE_RATE = 1;
 ```
 
-Stasis-Laden ist die einzige aktive Roboter-Lademechanik im MVP. Externe Roboterladung über Gebäudeenergie ist Future.
+Stasis-Laden ist die einzige aktive Roboter-Lademechanik im MVP. Externes Laden wird ab Expansion 2 ueber das Ladenetz aktiviert (docs/02-mvp/expansion-2-scope.md); Stasis bleibt die Mechanik fuer selfCharging.
 
 ## Gebäudeenergie und Produktion
 
@@ -184,6 +184,41 @@ energyBuffer1 = 500) und werden nicht dupliziert.
 ```ts
 const MVP_EVENTLOG_LIMIT = 200;
 const MVP_PLAYER_EVENT_DEDUPE_TICKS = 10;
+```
+
+## Expansion 2: Logistik und Ladenetz
+
+Regelquelle: `docs/02-mvp/expansion-2-scope.md`.
+
+```ts
+const EXP2_EXTERNAL_CHARGE_RATE = 5;
+const EXP2_EXTERNAL_CHARGE_POWER = 5;
+const EXP2_RECHARGE_ENTER_BATTERY = 20;
+
+const EXP2_TRANSPORT_ROBOT_HP = 90;
+const EXP2_TRANSPORT_ROBOT_BATTERY = 80;
+const EXP2_TRANSPORT_ROBOT_BATTERY_MAX = 120;
+const EXP2_TRANSPORT_ROBOT_CARGO_CAPACITY = 30;
+const EXP2_TRANSPORT_ROBOT_SIGHT_RANGE = 2;
+const EXP2_TRANSPORT_ROBOT_COST_STEEL_PLATES = 4;
+const EXP2_TRANSPORT_ROBOT_PRODUCTION_TICKS = 20;
+const EXP2_TRANSPORT_ROBOT_PRODUCTION_POWER = 50;
+
+const EXP2_RESOURCE_STORAGE_HP = 150;
+const EXP2_RESOURCE_STORAGE_COST_STEEL_PLATES = 3;
+const EXP2_RESOURCE_STORAGE_CONSTRUCTION_REQUIRED = 2;
+const EXP2_RESOURCE_STORAGE_CAPACITY = 100;
+
+const EXP2_GRID_ENERGY_LINE_HP = 80;
+const EXP2_GRID_ENERGY_LINE_COST_STEEL_PLATES = 1;
+const EXP2_GRID_ENERGY_LINE_CONSTRUCTION_REQUIRED = 1;
+
+const EXP2_STEELWORKS_INPUT_CAPACITY = 10;
+const EXP2_STEELWORKS_OUTPUT_CAPACITY = 10;
+const EXP2_SUPPLY_INPUT_BATCH = 4;
+const EXP2_MOVE_TO_STORAGE_THRESHOLD_PERCENT = 80;
+
+const EXP2_RESEARCH_TRANSPORT_LOGISTICS_COST = 500;
 ```
 
 ## Kommunikation

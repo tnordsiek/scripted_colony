@@ -343,6 +343,33 @@ Rejected Commands erzeugen keine spielrelevanten Entity-IDs, Task-IDs oder Resso
 
 Wenn eine abgelehnte Command-Verarbeitung ein kanonisches Diagnose-Event erzeugt, verwendet dieses Event wie alle Runtime-Events ein `GameEventId` nach `event.<tick6>.<seq3>.<code>`. Fuer generische Command-Ablehnungen ist der stabile Code `debug.command.rejected` definiert. Eine UI darf zusaetzlich lokal eine nicht persistierte Fehlermeldung anzeigen; diese gehoert nicht in den kanonischen `GameState`.
 
+## Expansion 2: MaterialRequestId und Transporter-Ids
+
+Muster fuer MaterialRequests (aktiv ab Expansion 2):
+
+```text
+request.<typ>.<tick6>.<seq2>
+```
+
+Beispiele:
+
+```text
+request.supplyBuildingInput.000412.01
+request.moveToStorage.000415.01
+```
+
+Sequenzregel: `seq2` = laufende Nummer der im selben Tick erzeugten Requests desselben
+Typs (deterministische Erzeugungsreihenfolge nach Ausloeser-Sortierung).
+
+Gespawnte Transportroboter folgen dem bestehenden Muster:
+
+```text
+robot.transportRobot.<seq3>
+```
+
+Die zugehoerigen Produktions-Task-Ids folgen dem bestehenden ProductionTask-Muster mit
+`robotType = transportRobot`.
+
 ## Reset-Regel
 
 `resetRun(seed?)` erzeugt einen neuen deterministischen Startzustand. Dabei entstehen wieder die statischen Initial-IDs:

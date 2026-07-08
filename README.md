@@ -2,19 +2,21 @@
 
 ## Aktueller Stand
 
-Dieses Paket ist Version v111. Es basiert auf v110 und definiert Expansion 1
+Dieses Paket ist Version v112. Es basiert auf v111 und definiert Expansion 2
+(Logistik + Ladenetz) in `docs/02-mvp/expansion-2-scope.md`. Zuvor: v111 definierte Expansion 1
 (Forschung + Tier-2-Einstieg). Das MVP ist vollstaendig implementiert (src/, tests/)
 und wird ueber GitHub Pages deployt; Wiedereinstieg siehe IMPLEMENTATION-STATUS.md.
 
-Kern von v111:
+Kern von v112:
 
 ```text
-Neues Scope-Dokument docs/02-mvp/expansion-1-scope.md (Quelleigentuemer Expansion 1)
-Aktiviert: KI-Forschungszentrum, Forschung (4 Projekte), Stahlwerk + Rezept,
-Energiespeicher, Ressource steelPlates, Template-Bibliothek, Ausfuehrungslimits
-Bootstrap-Kosten ohne Steel-/Silicon-Zirkularitaet definiert
-Datenmodell: ResearchState, SteelProductionTask, neue Commands/Events/AssetKeys
-Testmatrix um EXP1-Serie erweitert
+Neues Scope-Dokument docs/02-mvp/expansion-2-scope.md (Quelleigentuemer Expansion 2)
+Aktiviert: MaterialRequest-Engine (supplyBuildingInput, clearBuildingOutput,
+moveToStorage), Transportroboter (normale Roboterfabrik, 4 Steel Plates),
+Ressourcenspeicher, begehbare Grid Energy Line, Ladenetz (externes Laden an
+Energie-Gebaeuden/Gridlines), Stahlwerk-Inventare mit Auto-Modus, Iron Miner aktiv
+Datenmodell: ChargingTask + LogisticsTask aktiv, neue Commands/Events/AssetKeys
+Testmatrix um EXP2-Serie erweitert; v111 (Expansion 1) bleibt unveraendert gueltig
 ```
 
 Kurzregel:

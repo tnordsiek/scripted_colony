@@ -27,6 +27,9 @@ Finale Assets koennen vom Nutzer bereitgestellt werden. Fuer die MVP-Abnahme ist
 | `ui.reservation` | optional | ja | ja |
 | `ui.productionPaused` | optional | ja | ja |
 | `ui.spawnBlocked` | optional | ja | ja |
+| `building.resourceStorage` | ja | ja | ja (Expansion 2) |
+| `building.gridEnergyLine` | optional | ja | ja (Expansion 2) |
+| `robot.transportRobot` | ja | ja | ja (Expansion 2) |
 
 ## Regel
 

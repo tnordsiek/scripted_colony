@@ -22,7 +22,7 @@ Verweise auf Spezialdokumente bleiben erlaubt, aber nicht als Ersatz für widers
 2. Ältere einfache Typen gelten nicht mehr, wenn sie hier nicht vorkommen.
 3. Der alte einfache Program-Typ wird nicht verwendet.
 4. Die visuelle Programmierung nutzt ProgramTemplateDefinition, ProgramInstance und ProgramRow.
-5. RobotTask ist eine diskriminierte Union aus MovementTask, MiningTask, BuildingTask und StasisChargingTask. Future-Tasktypen wie charging/logistics sind nicht Teil der aktiven MVP-Union.
+5. RobotTask ist eine diskriminierte Union aus MovementTask, MiningTask, BuildingTask, StasisChargingTask sowie (ab Expansion 2) ChargingTask und LogisticsTask.
 6. BuildingType enthält energyStorage und resourceStorage.
 7. BuildingStatus enthält construction.
 8. standardRobot ist kein kanonischer RobotType.
@@ -647,7 +647,12 @@ type ProgramTemplateId =
   // Expansion 1 (docs/02-mvp/expansion-1-scope.md):
   | "template.buildAiResearchCenter"
   | "template.buildSteelworks"
-  | "template.buildEnergyStorage";
+  | "template.buildEnergyStorage"
+  // Expansion 2 (docs/02-mvp/expansion-2-scope.md):
+  | "template.buildResourceStorage"
+  | "template.buildGridEnergyLine"
+  | "template.logistics"
+  | "template.rechargeAtGrid";
 
 type ProgramExecutionLimit =
   | { type: "unlimited" }
@@ -1224,13 +1229,12 @@ type ActiveRobotTaskType =
   | "movement"
   | "mining"
   | "building"
-  | "stasisCharging";
-
-type FutureRobotTaskType =
+  | "stasisCharging"
+  // Expansion 2 (docs/02-mvp/expansion-2-scope.md):
   | "charging"
   | "logistics";
 
-type RobotTaskType = ActiveRobotTaskType | FutureRobotTaskType;
+type RobotTaskType = ActiveRobotTaskType;
 
 type BaseRobotTask = {
   id: RobotTaskId;
@@ -1287,11 +1291,35 @@ type StasisChargingTask = BaseRobotTask & {
   targetBattery: number;
 };
 
+// Expansion 2: externes Laden an einer Ladezone (docs/02-mvp/expansion-2-scope.md).
+type ChargingTask = BaseRobotTask & {
+  type: "charging";
+  targetBattery: number;
+};
+
+// Expansion 2: Ausfuehrung eines zugewiesenen MaterialRequests.
+type LogisticTaskPhaseActive =
+  | "moveToPickup"
+  | "pickup"
+  | "moveToDelivery"
+  | "delivery";
+
+type LogisticsTask = BaseRobotTask & {
+  type: "logistics";
+  requestId: MaterialRequestId;
+  phase: LogisticTaskPhaseActive;
+  path: FieldCoord[];
+  carried?: ResourceInventory;
+  movementState: MovementState;
+};
+
 type RobotTask =
   | MovementTask
   | MiningTask
   | BuildingTask
-  | StasisChargingTask;
+  | StasisChargingTask
+  | ChargingTask
+  | LogisticsTask;
 
 type ConstructionTaskReservation = {
   buildingId: BuildingId;
@@ -1582,7 +1610,10 @@ type LogisticTaskState = {
 MVP-Regel:
 
 ```text
-materialRequests existiert im GameState als vorbereitetes Feld, bleibt im MVP aber leer und wird nicht aktiv verarbeitet.
+materialRequests existiert im GameState als vorbereitetes Feld und bleibt im MVP leer.
+Ab Expansion 2 (docs/02-mvp/expansion-2-scope.md) sind die Request-Typen
+supplyBuildingInput, clearBuildingOutput und moveToStorage aktiv; supplyConstruction
+bleibt Future. Der Startzustand bleibt unveraendert leer.
 ```
 
 ## Forschung
@@ -1713,6 +1744,23 @@ type GameEventCode =
   | "production.steelPlates.outputBlocked"
   | "production.steelPlates.completed"
 
+  | "production.transportRobot.started"
+  | "production.transportRobot.blocked.notEnoughSteel"
+  | "production.transportRobot.paused.insufficientPower"
+  | "production.transportRobot.spawnBlocked"
+  | "production.transportRobot.spawned"
+
+  | "logistics.request.created"
+  | "logistics.request.assigned"
+  | "logistics.request.blocked"
+  | "logistics.request.fulfilled"
+  | "logistics.request.cancelled"
+
+  | "action.charge.started"
+  | "action.charge.paused.insufficientPower"
+  | "action.charge.completed"
+  | "action.charge.blocked.noReachableChargingField"
+
   | "debug.command.rejected"
   | "debug.canExecuteAction.result"
   | "debug.build.targetRejected"
@@ -1826,7 +1874,9 @@ type PlayerCommand =
   | { type: "selectResearchProject"; projectId: ResearchProjectId }
   | { type: "startSteelProduction"; buildingId: BuildingId }
   | { type: "addProgramFromTemplate"; robotId: RobotId; templateId: ProgramTemplateId }
-  | { type: "removeProgram"; robotId: RobotId; programId: ProgramInstanceId };
+  | { type: "removeProgram"; robotId: RobotId; programId: ProgramInstanceId }
+  // Expansion 2 (docs/02-mvp/expansion-2-scope.md):
+  | { type: "startTransportRobotProduction"; buildingId: BuildingId };
 
 type CommandResult =
   | { type: "accepted" }
@@ -1872,7 +1922,10 @@ type CommandRejectionReason =
   | "buildingIsNotSteelworks"
   | "steelProductionAlreadyRunning"
   | "templateNotUnlocked"
-  | "duplicateProgram";
+  | "duplicateProgram"
+
+  // Expansion 2: Transporter-Produktion
+  | "notEnoughSteelPlatesInStarterCargo";
 ```
 
 
@@ -1962,7 +2015,11 @@ type AssetKey =
   | "ui.selection"
   | "ui.reservation"
   | "ui.productionPaused"
-  | "ui.spawnBlocked";
+  | "ui.spawnBlocked"
+  // Expansion 2:
+  | "building.resourceStorage"
+  | "building.gridEnergyLine"
+  | "robot.transportRobot";
 
 type RenderAssetKind =
   | "image"

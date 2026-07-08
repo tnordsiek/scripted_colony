@@ -44,6 +44,18 @@ Objektiver Fortschritt: `npm test -- --run` (107 Tests, alle gruen).
 | 3 | Doku-Inkrement v111: Expansion 1 Scope (Forschung + Tier-2-Einstieg) | fertig |
 | 4 | Implementierung Expansion 1 (research.ts, Stahlwerk, Energiespeicher, Template-Bibliothek, ResearchPanel, EXP1-Tests) | fertig — 143 Tests gruen inkl. EXP1-E2E |
 
+## Expansion 2 (Logistik + Ladenetz, Plan genehmigt)
+
+| # | Paket | Status |
+|---|---|---|
+| A | Doku-Inkrement v112 (expansion-2-scope, kanonische Deltas, Testmatrix EXP2) | fertig |
+| B | Sim (logistics.ts, charging, Gridline, Inventare, Transporter, Miner aktiv) | offen — naechster Schritt |
+| C | Tests inkl. EXP2-E2E (vollautomatische Kette, Determinismus, Livelock-Waechter) | offen |
+| D | UI (LogisticsPanel, Inventare, Canvas), Preview-Verifikation, Deploy | offen |
+
+Naechster Schritt: src/sim/logistics.ts + tasks/logisticsTask.ts + tasks/chargingTask.ts
++ actions/charge.ts nach docs/02-mvp/expansion-2-scope.md; danach EXP2-Tests.
+
 Waehrend Stufe 4 gefundene und behobene Design-Luecken (Doku + Code):
 Einschluss-Schutz und Commitment-Regel der Bauplatzwahl
 (pathfinding-and-map-generation.md), Template-Einfuegeposition ueber der

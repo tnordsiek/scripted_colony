@@ -301,6 +301,22 @@ UI-State ist aus GameState und UiState ableitbar.
 
 Die UI darf keine Spielregeln ausloesen, sondern nur PlayerCommands senden.
 
+## Expansion-2-Erweiterung von Schritt 3
+
+Ab Expansion 2 (`docs/02-mvp/expansion-2-scope.md`) gliedert sich Schritt 3 verbindlich in:
+
+```text
+3a ProductionTasks (Roboterfabrik: ironMiner, transportRobot)
+3b Stahlwerk-Tasks inklusive Auto-Start aus dem Input-Inventar
+3c Forschung
+3d MaterialRequests: Ausloeser pruefen, Requests erzeugen, Quellen binden,
+   freie Transportroboter zuweisen
+```
+
+Die Ausfuehrung der zugewiesenen Requests (logistics-Tasks) und des externen Ladens
+(charging-Tasks) laeuft als RobotTasks in Schritt 5. Die Energie-Zuteilung in Schritt 2
+behandelt Ladeverbraucher nach allen Gebaeudeverbrauchern (Reihenfolge nach RobotId).
+
 ## Nicht Teil der Tick-Pipeline
 
 Nicht MVP-aktiv:
