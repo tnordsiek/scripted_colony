@@ -134,6 +134,27 @@ export const MVP_FALLBACK_ASSET_REGISTRY: FallbackAssetRegistry = {
     label: "Spawn blockiert",
     fallback: true,
   },
+  "building.resourceStorage": {
+    key: "building.resourceStorage",
+    kind: "cssShape",
+    source: "#b8933c",
+    label: "Ressourcenspeicher",
+    fallback: true,
+  },
+  "building.gridEnergyLine": {
+    key: "building.gridEnergyLine",
+    kind: "cssShape",
+    source: "#4cc2f2",
+    label: "Grid Energy Line",
+    fallback: true,
+  },
+  "robot.transportRobot": {
+    key: "robot.transportRobot",
+    kind: "cssShape",
+    source: "#7dd13f",
+    label: "Transporter",
+    fallback: true,
+  },
 };
 
 export function createDebugAssetFallbackUsedEvent(

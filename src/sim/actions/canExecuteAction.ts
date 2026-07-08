@@ -9,9 +9,11 @@ import type {
   Robot,
 } from "../types";
 import { planBuildBuilding } from "./buildBuilding";
+import { planCharge } from "./charge";
 import { planMineResource } from "./mineResource";
 import { planScoutNearby } from "./scoutNearby";
 import { planStasisCharge } from "./stasisCharge";
+import { planLogistics } from "../logistics";
 
 export function canExecuteAction(
   state: GameState,
@@ -47,8 +49,11 @@ export function canExecuteAction(
     case "action.buildBuilding":
       return planBuildBuilding(state, robot, action, sourceProgramId, sourceRowId);
     case "action.charge":
-      // Future/Advanced: keine aktive MVP-ActionDefinition, kein Task.
-      return { type: "notExecutable", reason: "unsupportedMvpAction" };
+      // Expansion 2: externes Laden am Ladenetz.
+      return planCharge(state, robot, action, sourceProgramId, sourceRowId);
+    case "action.logistics":
+      // Expansion 2: zugewiesenen MaterialRequest ausfuehren.
+      return planLogistics(state, robot, action, sourceProgramId, sourceRowId);
     default:
       return { type: "notExecutable", reason: "unsupportedMvpAction" };
   }

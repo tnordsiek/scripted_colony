@@ -20,7 +20,11 @@ import {
   processProductionTasks,
   processSpawnChecks,
   processSteelTasks,
+  startAutoSteelTasks,
 } from "./production";
+import { processLogisticsTick } from "./logistics";
+import { processChargingTask } from "./tasks/chargingTask";
+import { processLogisticsTask } from "./tasks/logisticsTask";
 import { evaluateProgramStack } from "./programs";
 import { processResearchTick } from "./research";
 import { scoreRobotSpawned } from "./scoring";
@@ -170,7 +174,8 @@ export function advanceTick(
     });
   }
 
-  // Schritt 3 (Fortsetzung): Stahlwerk-Verarbeitung (Expansion 1).
+  // Schritt 3b: Stahlwerk-Auto-Modus (Expansion 2) und Verarbeitung.
+  startAutoSteelTasks(state);
   const steel = processSteelTasks(state, energy.granted);
   for (const [index, taskId] of steel.pausedTaskIds.entries()) {
     events.push({
@@ -260,6 +265,61 @@ export function advanceTick(
     });
   }
 
+  // Schritt 3d: MaterialRequests erzeugen und zuweisen (Expansion 2).
+  const logistics = processLogisticsTick(state);
+  for (const [index, request] of logistics.created.entries()) {
+    events.push({
+      tick: state.tick,
+      visibility: "debug",
+      severity: "info",
+      priority: "low",
+      category: "system",
+      code: "logistics.request.created",
+      message: `Request erzeugt: ${request.type}.`,
+      entityId: request.id,
+      details: { requestType: request.type, requestId: request.id },
+      pipelineStepOrder: 3,
+      sourceOrder: 300 + index,
+      entitySortKey: `production:${request.id}`,
+      localSequence: 1,
+    });
+  }
+  for (const [index, assignment] of logistics.assigned.entries()) {
+    events.push({
+      tick: state.tick,
+      visibility: "debug",
+      severity: "info",
+      priority: "low",
+      category: "system",
+      code: "logistics.request.assigned",
+      message: `Request ${assignment.requestId} an ${assignment.robotId} zugewiesen.`,
+      entityId: assignment.requestId,
+      robotId: assignment.robotId,
+      details: { requestId: assignment.requestId, robotId: assignment.robotId },
+      pipelineStepOrder: 3,
+      sourceOrder: 400 + index,
+      entitySortKey: `production:${assignment.requestId}`,
+      localSequence: 1,
+    });
+  }
+  for (const [index, blocked] of logistics.blocked.entries()) {
+    events.push({
+      tick: state.tick,
+      visibility: "player",
+      severity: "warning",
+      priority: "normal",
+      category: "system",
+      code: "logistics.request.blocked",
+      message: `Logistikauftrag blockiert: ${blocked.reason}.`,
+      entityId: blocked.requestId,
+      details: { requestId: blocked.requestId, reason: blocked.reason },
+      pipelineStepOrder: 3,
+      sourceOrder: 500 + index,
+      entitySortKey: `production:${blocked.requestId}`,
+      localSequence: 1,
+    });
+  }
+
   // Schritt 4: Spawn-Pruefungen.
   const spawnResult = processSpawnChecks(state);
   for (const [index, blocked] of spawnResult.blocked.entries()) {
@@ -269,7 +329,10 @@ export function advanceTick(
       severity: "warning",
       priority: "high",
       category: "production",
-      code: "production.ironMiner.spawnBlocked",
+      code:
+        blocked.robotType === "transportRobot"
+          ? "production.transportRobot.spawnBlocked"
+          : "production.ironMiner.spawnBlocked",
       message: "Spawn blockiert: Kein freies Ausgabefeld.",
       buildingId: blocked.buildingId,
       entityId: blocked.taskId,
@@ -287,8 +350,14 @@ export function advanceTick(
       severity: "success",
       priority: "high",
       category: "production",
-      code: "production.ironMiner.spawned",
-      message: "Iron Miner gespawnt.",
+      code:
+        spawned.robotType === "transportRobot"
+          ? "production.transportRobot.spawned"
+          : "production.ironMiner.spawned",
+      message:
+        spawned.robotType === "transportRobot"
+          ? "Transporter gespawnt."
+          : "Iron Miner gespawnt.",
       robotId: spawned.robotId,
       buildingId: spawned.buildingId,
       entityId: spawned.taskId,
@@ -357,6 +426,48 @@ export function advanceTick(
       case "stasisCharging":
         processStasisChargingTask(state, robot, task);
         break;
+      case "charging":
+        processChargingTask(state, robot, task, energy.granted.has(`charge:${robot.id}`));
+        break;
+      case "logistics": {
+        const outcome = processLogisticsTask(state, robot, task);
+        if (outcome.type === "fulfilled") {
+          events.push({
+            tick: state.tick,
+            visibility: "player",
+            severity: "success",
+            priority: "normal",
+            category: "system",
+            code: "logistics.request.fulfilled",
+            message: "Logistikauftrag erfuellt.",
+            robotId: robot.id,
+            entityId: outcome.requestId,
+            details: { requestId: outcome.requestId },
+            pipelineStepOrder: 6,
+            sourceOrder: robotIndex,
+            entitySortKey: `robot:${robot.id}`,
+            localSequence: 3,
+          });
+        } else if (outcome.type === "blocked") {
+          events.push({
+            tick: state.tick,
+            visibility: "player",
+            severity: "warning",
+            priority: "normal",
+            category: "system",
+            code: "logistics.request.blocked",
+            message: `Logistikauftrag blockiert: ${outcome.reason}.`,
+            robotId: robot.id,
+            entityId: outcome.requestId,
+            details: { requestId: outcome.requestId, reason: outcome.reason },
+            pipelineStepOrder: 6,
+            sourceOrder: robotIndex,
+            entitySortKey: `robot:${robot.id}`,
+            localSequence: 3,
+          });
+        }
+        break;
+      }
     }
 
     // Task-Prozessoren mutieren task.status; Narrowing daher aufheben.
@@ -374,6 +485,25 @@ export function advanceTick(
           message: "Stasis-Laden abgeschlossen.",
           robotId: robot.id,
           entityId: robot.id,
+          pipelineStepOrder: 6,
+          sourceOrder: robotIndex,
+          entitySortKey: `robot:${robot.id}`,
+          localSequence: 1,
+        });
+      }
+
+      if (task.type === "charging" && endStatus === "completed") {
+        events.push({
+          tick: state.tick,
+          visibility: "player",
+          severity: "success",
+          priority: "normal",
+          category: "robot",
+          code: "action.charge.completed",
+          message: "Laden abgeschlossen.",
+          robotId: robot.id,
+          entityId: robot.id,
+          details: { battery: robot.battery },
           pipelineStepOrder: 6,
           sourceOrder: robotIndex,
           entitySortKey: `robot:${robot.id}`,
@@ -556,6 +686,23 @@ export function advanceTick(
           }
         }
       }
+    } else if (task.type === "charging") {
+      events.push({
+        tick: state.tick,
+        visibility: "player",
+        severity: "info",
+        priority: "normal",
+        category: "robot",
+        code: "action.charge.started",
+        message: "Laden an Ladezone gestartet.",
+        robotId: robot.id,
+        entityId: robot.id,
+        details: { battery: robot.battery, targetBattery: task.targetBattery },
+        pipelineStepOrder: 8,
+        sourceOrder: robotIndex,
+        entitySortKey: `robot:${robot.id}`,
+        localSequence: 2,
+      });
     } else if (task.type === "mining") {
       events.push({
         tick: state.tick,

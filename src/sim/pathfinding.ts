@@ -48,6 +48,26 @@ export function isFieldPassable(field: Field): boolean {
 
 // Kürzester Pfad per BFS. Das Zielfeld darf blockiert sein (z. B. Ore-Feld als
 // Erreichbarkeitsziel); es zählt dann als letzter Schritt.
+// Expansion 2: Gridline-Felder sind begehbar (docs/02-mvp/expansion-2-scope.md).
+// Diese Variante kennt den GameState und behandelt gridEnergyLine als passierbar.
+export function isFieldPassableInState(
+  state: { buildings: Array<{ id: string; type: string; status: string }> },
+  field: Field,
+): boolean {
+  if (isFieldPassable(field)) {
+    return true;
+  }
+  if (
+    field.buildingId &&
+    field.terrainType === "plains" &&
+    !(field.resource && field.resource.amount > 0)
+  ) {
+    const building = state.buildings.find((entry) => entry.id === field.buildingId);
+    return building?.type === "gridEnergyLine" && building.status !== "destroyed";
+  }
+  return false;
+}
+
 export function bfsPath(
   map: Field[][],
   from: FieldCoord,

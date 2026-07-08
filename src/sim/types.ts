@@ -267,6 +267,7 @@ export type Building = {
 
   // Expansion 1:
   steelProductionTask?: SteelProductionTask;
+  producedSteelPlates?: number; // Lebenszeitzaehler fuer Task-Id-Sequenz
   storedEnergy?: number; // nur energyStorage, 0..Kapazitaet
 };
 
@@ -284,7 +285,12 @@ export type ProgramTemplateId =
   // Expansion 1 (docs/02-mvp/expansion-1-scope.md):
   | "template.buildAiResearchCenter"
   | "template.buildSteelworks"
-  | "template.buildEnergyStorage";
+  | "template.buildEnergyStorage"
+  // Expansion 2 (docs/02-mvp/expansion-2-scope.md):
+  | "template.buildResourceStorage"
+  | "template.buildGridEnergyLine"
+  | "template.logistics"
+  | "template.rechargeAtGrid";
 
 export type ProgramExecutionLimit =
   | { type: "unlimited" }
@@ -463,7 +469,9 @@ export type ActionId =
   | "action.scoutNearby"
   | "action.mineResource"
   | "action.buildBuilding"
-  | "action.stasisCharge";
+  | "action.stasisCharge"
+  // Expansion 2: Logistikauftrag ausfuehren (nur Transportroboter).
+  | "action.logistics";
 
 export type ProgramAction = {
   actionId: ActionId;
@@ -651,11 +659,12 @@ export type ActiveRobotTaskType =
   | "movement"
   | "mining"
   | "building"
-  | "stasisCharging";
+  | "stasisCharging"
+  // Expansion 2 (docs/02-mvp/expansion-2-scope.md):
+  | "charging"
+  | "logistics";
 
-export type FutureRobotTaskType = "charging" | "logistics";
-
-export type RobotTaskType = ActiveRobotTaskType | FutureRobotTaskType;
+export type RobotTaskType = ActiveRobotTaskType;
 
 export type BaseRobotTask = {
   id: RobotTaskId;
@@ -691,7 +700,10 @@ export type ActiveBuildableType =
   // Expansion 1:
   | "aiResearchCenter"
   | "steelworks"
-  | "energyStorage";
+  | "energyStorage"
+  // Expansion 2:
+  | "resourceStorage"
+  | "gridEnergyLine";
 
 export type BuildingTask = BaseRobotTask & {
   type: "building";
@@ -712,11 +724,35 @@ export type StasisChargingTask = BaseRobotTask & {
   targetBattery: number;
 };
 
+// Expansion 2: externes Laden an einer Ladezone.
+export type ChargingTask = BaseRobotTask & {
+  type: "charging";
+  targetBattery: number;
+};
+
+// Expansion 2: Ausfuehrung eines zugewiesenen MaterialRequests.
+export type LogisticTaskPhaseActive =
+  | "moveToPickup"
+  | "pickup"
+  | "moveToDelivery"
+  | "delivery";
+
+export type LogisticsTask = BaseRobotTask & {
+  type: "logistics";
+  requestId: MaterialRequestId;
+  phase: LogisticTaskPhaseActive;
+  path: FieldCoord[];
+  carried?: ResourceInventory;
+  movementState: MovementState;
+};
+
 export type RobotTask =
   | MovementTask
   | MiningTask
   | BuildingTask
-  | StasisChargingTask;
+  | StasisChargingTask
+  | ChargingTask
+  | LogisticsTask;
 
 export type ConstructionTaskReservation = {
   buildingId: BuildingId;
@@ -736,10 +772,12 @@ export type ProductionBlockedReason =
   | "noFreeOutputField"
   | "buildingDisabled";
 
+export type ProducibleRobotType = "ironMiner" | "transportRobot";
+
 export type ProductionTask = {
   id: ProductionTaskId;
   buildingId: BuildingId;
-  robotType: "ironMiner";
+  robotType: ProducibleRobotType;
   cost: ResourceCost;
   costPaid: boolean;
   totalTicks: number;
@@ -803,6 +841,9 @@ export type SteelProductionBlockedReason = "insufficientPower" | "cargoFull";
 export type SteelProductionTask = {
   id: string;
   buildingId: BuildingId;
+  // Expansion 2: "cargo" = manueller Direktweg (Starter-Cargo),
+  // "inventory" = Auto-Modus ueber input/output-Inventar.
+  source?: "cargo" | "inventory";
   cost: ResourceCost; // { ironOre: 2 }
   costPaid: boolean;
   totalTicks: number;
@@ -953,6 +994,20 @@ export type GameEventCode =
   | "production.steelPlates.paused.insufficientPower"
   | "production.steelPlates.outputBlocked"
   | "production.steelPlates.completed"
+  | "production.transportRobot.started"
+  | "production.transportRobot.blocked.notEnoughSteel"
+  | "production.transportRobot.paused.insufficientPower"
+  | "production.transportRobot.spawnBlocked"
+  | "production.transportRobot.spawned"
+  | "logistics.request.created"
+  | "logistics.request.assigned"
+  | "logistics.request.blocked"
+  | "logistics.request.fulfilled"
+  | "logistics.request.cancelled"
+  | "action.charge.started"
+  | "action.charge.paused.insufficientPower"
+  | "action.charge.completed"
+  | "action.charge.blocked.noReachableChargingField"
   | "debug.command.rejected"
   | "debug.canExecuteAction.result"
   | "debug.build.targetRejected"
@@ -1047,7 +1102,9 @@ export type PlayerCommand =
   | { type: "selectResearchProject"; projectId: ResearchProjectId }
   | { type: "startSteelProduction"; buildingId: BuildingId }
   | { type: "addProgramFromTemplate"; robotId: RobotId; templateId: ProgramTemplateId }
-  | { type: "removeProgram"; robotId: RobotId; programId: ProgramInstanceId };
+  | { type: "removeProgram"; robotId: RobotId; programId: ProgramInstanceId }
+  // Expansion 2:
+  | { type: "startTransportRobotProduction"; buildingId: BuildingId };
 
 export type CommandResult =
   | { type: "accepted" }
@@ -1089,7 +1146,9 @@ export type CommandRejectionReason =
   | "buildingIsNotSteelworks"
   | "steelProductionAlreadyRunning"
   | "templateNotUnlocked"
-  | "duplicateProgram";
+  | "duplicateProgram"
+  // Expansion 2:
+  | "notEnoughSteelPlatesInStarterCargo";
 
 // ---------------------------------------------------------------------------
 // GameState
@@ -1136,7 +1195,11 @@ export type AssetKey =
   | "ui.selection"
   | "ui.reservation"
   | "ui.productionPaused"
-  | "ui.spawnBlocked";
+  | "ui.spawnBlocked"
+  // Expansion 2:
+  | "building.resourceStorage"
+  | "building.gridEnergyLine"
+  | "robot.transportRobot";
 
 export type RenderAssetKind = "image" | "cssShape" | "textBadge" | "proceduralTile";
 

@@ -5,15 +5,41 @@ import {
   EXP1_ENERGY_STORAGE_CAPACITY,
   EXP1_ENERGY_STORAGE_MAX_CHARGE_RATE,
   EXP1_ENERGY_STORAGE_MAX_DISCHARGE_RATE,
+  EXP2_EXTERNAL_CHARGE_POWER,
   MVP_SOLAR_COLLECTOR_POWER_PROVIDED,
 } from "./constants";
 import { isResearchEligible, researchPowerRequired } from "./research";
-import type { Building, EnergySnapshot, GameState } from "./types";
+import type { Building, EnergySnapshot, FieldCoord, GameState } from "./types";
+
+// Expansion 2: Ladezone = orthogonal neben aktivem Solar Collector oder
+// Energiespeicher, auf oder orthogonal neben einer aktiven Grid Energy Line.
+export function isChargingZone(state: GameState, coord: FieldCoord): boolean {
+  for (const building of state.buildings) {
+    if (building.status !== "active" || !building.isEnabled) {
+      continue;
+    }
+    const dx = Math.abs(building.x - coord.x);
+    const dy = Math.abs(building.y - coord.y);
+    const orthogonalAdjacent = dx + dy === 1;
+    const onField = dx === 0 && dy === 0;
+
+    if (
+      (building.type === "solarCollector" || building.type === "energyStorage") &&
+      orthogonalAdjacent
+    ) {
+      return true;
+    }
+    if (building.type === "gridEnergyLine" && (onField || orthogonalAdjacent)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 type EnergyConsumer = {
-  key: string; // production:<id> | steel:<id> | research
-  buildingId: string;
-  kindOrder: number; // 0 production, 1 steel, 2 research
+  key: string; // production:<id> | steel:<id> | research | charge:<robotId>
+  buildingId: string; // bei Ladeverbrauchern: robot:<robotId> als Sortierschluessel
+  kindOrder: number; // 0 production, 1 steel, 2 research, 3 charge
   powerRequired: number;
 };
 
@@ -77,7 +103,29 @@ function eligibleConsumers(state: GameState): EnergyConsumer[] {
       (a.buildingId < b.buildingId ? -1 : a.buildingId > b.buildingId ? 1 : 0) ||
       a.kindOrder - b.kindOrder,
   );
-  return consumers;
+
+  // Expansion 2: Ladeverbraucher NACH allen Gebaeudeverbrauchern, nach RobotId.
+  const chargeConsumers: EnergyConsumer[] = [];
+  for (const robot of state.robots) {
+    const task = robot.activeTask;
+    if (
+      task?.type === "charging" &&
+      task.status === "running" &&
+      task.startedTick < state.tick &&
+      isChargingZone(state, { x: robot.x, y: robot.y })
+    ) {
+      chargeConsumers.push({
+        key: `charge:${robot.id}`,
+        buildingId: `robot:${robot.id}`,
+        kindOrder: 3,
+        powerRequired: EXP2_EXTERNAL_CHARGE_POWER,
+      });
+    }
+  }
+  chargeConsumers.sort((a, b) =>
+    a.buildingId < b.buildingId ? -1 : a.buildingId > b.buildingId ? 1 : 0,
+  );
+  return [...consumers, ...chargeConsumers];
 }
 
 function activeStorages(state: GameState): Building[] {

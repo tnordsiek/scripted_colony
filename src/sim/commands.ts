@@ -4,6 +4,9 @@ import {
   EXP1_STEEL_RECIPE_INPUT_IRON_ORE,
   EXP1_STEEL_RECIPE_POWER_REQUIRED,
   EXP1_STEEL_RECIPE_TICKS,
+  EXP2_TRANSPORT_ROBOT_COST_STEEL_PLATES,
+  EXP2_TRANSPORT_ROBOT_PRODUCTION_POWER,
+  EXP2_TRANSPORT_ROBOT_PRODUCTION_TICKS,
   MVP_IRON_MINER_PRODUCTION,
 } from "./constants";
 import { makeCommandSortKey, type GameEventCandidate } from "./events";
@@ -14,6 +17,7 @@ import {
   areExecutionLimitsUnlocked,
   getActiveResearchProject,
   hasActiveResearchCenter,
+  isLogisticsUnlocked,
   isTemplateUnlocked,
 } from "./research";
 import type {
@@ -358,6 +362,61 @@ function applySingleCommand(state: GameState, command: PlayerCommand): CommandRe
       return ACCEPTED;
     }
 
+    case "startTransportRobotProduction": {
+      if (!isLogisticsUnlocked(state)) {
+        return reject("templateNotUnlocked");
+      }
+      const building = state.buildings.find(
+        (entry) => entry.id === command.buildingId,
+      );
+      if (!building) {
+        return reject("buildingNotFound");
+      }
+      if (building.type !== "robotFactory") {
+        return reject("buildingIsNotRobotFactory");
+      }
+      if (building.status !== "active") {
+        return reject("buildingNotActive");
+      }
+      if (!building.isEnabled) {
+        return reject("buildingDisabled");
+      }
+      if (building.productionTask) {
+        return reject("productionAlreadyRunning");
+      }
+      const starter = state.robots.find((robot) => robot.type === "starterRobot");
+      if (!starter || (starter.status !== "active" && starter.status !== "stasis")) {
+        return reject("starterRobotMissing");
+      }
+      if (starter.communicationStatus !== "connected") {
+        return reject("starterRobotNotConnected");
+      }
+      const availableSteel = starter.cargo.used.steelPlates ?? 0;
+      if (availableSteel < EXP2_TRANSPORT_ROBOT_COST_STEEL_PLATES) {
+        return reject("notEnoughSteelPlatesInStarterCargo");
+      }
+
+      starter.cargo.used.steelPlates =
+        availableSteel - EXP2_TRANSPORT_ROBOT_COST_STEEL_PLATES;
+      if (starter.cargo.used.steelPlates === 0) {
+        delete starter.cargo.used.steelPlates;
+      }
+      building.productionTask = {
+        id: createProductionTaskId(building.id, "transportRobot", state),
+        buildingId: building.id,
+        robotType: "transportRobot",
+        cost: { steelPlates: EXP2_TRANSPORT_ROBOT_COST_STEEL_PLATES },
+        costPaid: true,
+        totalTicks: EXP2_TRANSPORT_ROBOT_PRODUCTION_TICKS,
+        remainingTicks: EXP2_TRANSPORT_ROBOT_PRODUCTION_TICKS,
+        powerRequired: EXP2_TRANSPORT_ROBOT_PRODUCTION_POWER,
+        status: "inProgress",
+        createdTick: state.tick,
+        startedTick: state.tick,
+      };
+      return ACCEPTED;
+    }
+
     case "removeProgram": {
       const robot = findRobot(state, command.robotId);
       if (!robot) {
@@ -401,6 +460,32 @@ export function applyPlayerCommands(
 
     if (result.type === "rejected") {
       if (
+        command.type === "startTransportRobotProduction" &&
+        result.reason === "notEnoughSteelPlatesInStarterCargo"
+      ) {
+        const starter = state.robots.find((robot) => robot.type === "starterRobot");
+        events.push({
+          tick: state.tick,
+          visibility: "player",
+          severity: "warning",
+          priority: "high",
+          category: "production",
+          code: "production.transportRobot.blocked.notEnoughSteel",
+          message:
+            "Transporter-Produktion blockiert: Nicht genug Steel Plates im Startroboter-Cargo.",
+          buildingId: command.buildingId,
+          entityId: command.buildingId,
+          details: {
+            reason: "notEnoughSteelPlatesInStarterCargo",
+            requiredSteel: EXP2_TRANSPORT_ROBOT_COST_STEEL_PLATES,
+            availableSteel: starter?.cargo.used.steelPlates ?? 0,
+          },
+          pipelineStepOrder: 1,
+          sourceOrder: index,
+          entitySortKey: makeCommandSortKey(index),
+          localSequence: 1,
+        });
+      } else if (
         command.type === "startSteelProduction" &&
         result.reason === "notEnoughIronOreInStarterCargo"
       ) {
@@ -500,6 +585,29 @@ export function applyPlayerCommands(
         details: {
           steelTaskId: building?.steelProductionTask?.id ?? "",
           remainingTicks: building?.steelProductionTask?.remainingTicks ?? 0,
+        },
+        pipelineStepOrder: 1,
+        sourceOrder: index,
+        entitySortKey: makeCommandSortKey(index),
+        localSequence: 1,
+      });
+    } else if (command.type === "startTransportRobotProduction") {
+      const building = state.buildings.find(
+        (entry) => entry.id === command.buildingId,
+      );
+      events.push({
+        tick: state.tick,
+        visibility: "player",
+        severity: "info",
+        priority: "normal",
+        category: "production",
+        code: "production.transportRobot.started",
+        message: "Transporter-Produktion gestartet (4 Steel Plates, 20 Ticks).",
+        buildingId: command.buildingId,
+        entityId: command.buildingId,
+        details: {
+          productionTaskId: building?.productionTask?.id ?? "",
+          remainingTicks: building?.productionTask?.remainingTicks ?? 0,
         },
         pipelineStepOrder: 1,
         sourceOrder: index,

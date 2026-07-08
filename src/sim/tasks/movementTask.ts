@@ -1,7 +1,7 @@
 // MovementTask-Fortschritt nach docs/03-technical/simulation-rules.md
 // (Bewegung, Pfadfindung und Kollisionen) und robot-task-lifecycle.md.
 import { MVP_MOVE_BATTERY_COST } from "../constants";
-import { bfsPath, isFieldPassable, isInsideMap } from "../pathfinding";
+import { bfsPath, isFieldPassableInState, isInsideMap } from "../pathfinding";
 import { evaluateStopConditions } from "../programs";
 import { selectScoutTarget } from "../actions/scoutNearby";
 import type {
@@ -61,13 +61,15 @@ export function processMovementTask(
   }
 
   // Pfad validieren bzw. neu berechnen.
+  const passable = (field: Parameters<typeof isFieldPassableInState>[1]) =>
+    isFieldPassableInState(state, field);
   let next = task.path[0];
   const nextInvalid =
     !next ||
     !isInsideMap(state.map, next) ||
-    !isFieldPassable(state.map[next.y][next.x]);
+    !passable(state.map[next.y][next.x]);
   if (nextInvalid) {
-    const newPath = bfsPath(state.map, { x: robot.x, y: robot.y }, task.target);
+    const newPath = bfsPath(state.map, { x: robot.x, y: robot.y }, task.target, passable);
     if (newPath === null || newPath.length === 0) {
       task.status = "aborted";
       task.abortReason = "noPath";

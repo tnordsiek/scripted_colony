@@ -403,6 +403,146 @@ export const MVP_PROGRAM_TEMPLATES: ProgramTemplateDefinition[] = [
       },
     ],
   },
+  // --- Expansion 2 (docs/02-mvp/expansion-2-scope.md) ---
+  {
+    id: "template.buildResourceStorage",
+    name: "Ressourcenspeicher bauen",
+    description: "Baut den Ressourcenspeicher (Expansion 2, nach Transportlogistik I).",
+    defaultEnabled: true,
+    defaultStackPosition: 9,
+    rows: [
+      {
+        id: "row.starter.buildResourceStorage.main",
+        if: {
+          type: "group",
+          operator: "OR",
+          conditions: [
+            buildingExists({ buildingType: "resourceStorage", status: "construction" }),
+            {
+              type: "group",
+              operator: "AND",
+              conditions: [
+                {
+                  type: "sensor",
+                  sensorId: "sensor.cargoResourceAmount",
+                  operator: "gte",
+                  value: {
+                    type: "resourceAmount",
+                    value: { resourceType: "steelPlates", amount: 3 },
+                  },
+                },
+                {
+                  type: "not",
+                  condition: buildingExists({ buildingType: "resourceStorage" }),
+                },
+              ],
+            },
+          ],
+        },
+        then: {
+          actionId: "action.buildBuilding",
+          parameters: { buildingType: "resourceStorage" },
+        },
+        stop: {
+          operator: "OR",
+          conditions: [
+            buildingExists({ buildingType: "resourceStorage", status: "active" }),
+            ROBOT_STATUS_STASIS_CONDITION,
+          ],
+        },
+      },
+    ],
+  },
+  {
+    id: "template.buildGridEnergyLine",
+    name: "Grid Energy Line bauen",
+    description:
+      "Baut Energieleitungen (begehbar); mehrere Gridlines sind erlaubt. Per enabled steuern.",
+    defaultEnabled: true,
+    defaultStackPosition: 10,
+    rows: [
+      {
+        id: "row.starter.buildGridEnergyLine.main",
+        if: {
+          type: "sensor",
+          sensorId: "sensor.cargoResourceAmount",
+          operator: "gte",
+          value: {
+            type: "resourceAmount",
+            value: { resourceType: "steelPlates", amount: 1 },
+          },
+        },
+        then: {
+          actionId: "action.buildBuilding",
+          parameters: { buildingType: "gridEnergyLine" },
+        },
+        stop: {
+          operator: "OR",
+          conditions: [ROBOT_STATUS_STASIS_CONDITION],
+        },
+      },
+    ],
+  },
+  {
+    id: "template.logistics",
+    name: "Logistikauftraege ausfuehren",
+    description: "Fuehrt zugewiesene MaterialRequests aus (nur Transportroboter).",
+    defaultEnabled: true,
+    defaultStackPosition: 1,
+    rows: [
+      {
+        id: "row.transport.logistics.main",
+        if: {
+          type: "sensor",
+          sensorId: "sensor.robotStatus",
+          operator: "eq",
+          value: { type: "robotStatus", value: "active" },
+        },
+        then: {
+          actionId: "action.logistics",
+          parameters: {},
+        },
+        stop: {
+          operator: "OR",
+          conditions: [ROBOT_STATUS_STASIS_CONDITION],
+        },
+      },
+    ],
+  },
+  {
+    id: "template.rechargeAtGrid",
+    name: "An Ladezone laden",
+    description:
+      "Faehrt bei niedriger Batterie zur naechsten Ladezone und laedt voll (Expansion 2).",
+    defaultEnabled: true,
+    defaultStackPosition: 11,
+    rows: [
+      {
+        id: "row.worker.rechargeAtGrid.main",
+        if: {
+          type: "sensor",
+          sensorId: "sensor.battery",
+          operator: "lte",
+          value: { type: "percentage", value: 20 },
+        },
+        then: {
+          actionId: "action.charge",
+          parameters: {},
+        },
+        stop: {
+          operator: "OR",
+          conditions: [
+            {
+              type: "sensor",
+              sensorId: "sensor.battery",
+              operator: "gte",
+              value: { type: "percentage", value: 100 },
+            },
+          ],
+        },
+      },
+    ],
+  },
 ];
 
 const STARTER_INSTANCE_IDS: Record<ProgramTemplateId, string> = {
@@ -415,6 +555,10 @@ const STARTER_INSTANCE_IDS: Record<ProgramTemplateId, string> = {
   "template.buildAiResearchCenter": "program.starter.buildAiResearchCenter",
   "template.buildSteelworks": "program.starter.buildSteelworks",
   "template.buildEnergyStorage": "program.starter.buildEnergyStorage",
+  "template.buildResourceStorage": "program.starter.buildResourceStorage",
+  "template.buildGridEnergyLine": "program.starter.buildGridEnergyLine",
+  "template.logistics": "program.starter.logistics",
+  "template.rechargeAtGrid": "program.starter.rechargeAtGrid",
 };
 
 export function getProgramTemplate(
@@ -433,10 +577,11 @@ function cloneRows(rows: ProgramRow[]): ProgramRow[] {
 
 export function createProgramInstanceFromTemplate(
   templateId: ProgramTemplateId,
+  instanceId?: string,
 ): ProgramInstance {
   const template = getProgramTemplate(templateId);
   return {
-    id: STARTER_INSTANCE_IDS[templateId],
+    id: instanceId ?? STARTER_INSTANCE_IDS[templateId],
     templateId,
     name: template.name,
     enabled: template.defaultEnabled,
@@ -454,6 +599,34 @@ export function createStarterProgramStack(): ProgramInstance[] {
     createProgramInstanceFromTemplate("template.buildRobotFactory"),
     createProgramInstanceFromTemplate("template.exploreNearby"),
     createProgramInstanceFromTemplate("template.stasisCharge"),
+  ];
+}
+
+// Expansion 2: Spawn-Stacks fuer aktive Arbeitsroboter
+// (docs/02-mvp/expansion-2-scope.md).
+export function createIronMinerSpawnStack(robotId: string): ProgramInstance[] {
+  return [
+    createProgramInstanceFromTemplate(
+      "template.mineIronOre",
+      `program.${robotId}.mineIronOre`,
+    ),
+    createProgramInstanceFromTemplate(
+      "template.rechargeAtGrid",
+      `program.${robotId}.rechargeAtGrid`,
+    ),
+  ];
+}
+
+export function createTransportRobotSpawnStack(robotId: string): ProgramInstance[] {
+  return [
+    createProgramInstanceFromTemplate(
+      "template.logistics",
+      `program.${robotId}.logistics`,
+    ),
+    createProgramInstanceFromTemplate(
+      "template.rechargeAtGrid",
+      `program.${robotId}.rechargeAtGrid`,
+    ),
   ];
 }
 

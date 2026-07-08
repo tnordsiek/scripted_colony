@@ -42,6 +42,13 @@ export const EXP1_RESEARCH_PROJECTS: ActiveResearchProject[] = [
     cost: 500,
     prerequisites: ["research.energyDistribution1"],
   },
+  // Expansion 2 (docs/02-mvp/expansion-2-scope.md):
+  {
+    id: "research.transportLogistics1",
+    name: "Transportlogistik I",
+    cost: 500,
+    prerequisites: ["research.metalProcessing1"],
+  },
 ];
 
 export function getActiveResearchProject(
@@ -84,9 +91,22 @@ export function isTemplateUnlocked(
       return isProjectCompleted(state, "research.metalProcessing1");
     case "template.buildEnergyStorage":
       return isProjectCompleted(state, "research.energyBuffer1");
+    // Expansion 2:
+    case "template.buildResourceStorage":
+    case "template.buildGridEnergyLine":
+      return isProjectCompleted(state, "research.transportLogistics1");
+    case "template.logistics":
+    case "template.rechargeAtGrid":
+      // Roboter-interne Templates: nicht ueber die Bibliothek waehlbar.
+      return false;
     default:
       return false;
   }
+}
+
+// Expansion 2: Logistik (Requests, Transporterproduktion) freigeschaltet?
+export function isLogisticsUnlocked(state: GameState): boolean {
+  return isProjectCompleted(state, "research.transportLogistics1");
 }
 
 export function areExecutionLimitsUnlocked(state: GameState): boolean {

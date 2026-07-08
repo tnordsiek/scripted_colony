@@ -2,6 +2,12 @@
 // docs/03-technical/action-executability-matrix.md und
 // docs/03-technical/pathfinding-and-map-generation.md (Build-Action Bauplatzwahl).
 import {
+  EXP2_GRID_ENERGY_LINE_CONSTRUCTION_REQUIRED,
+  EXP2_GRID_ENERGY_LINE_COST_STEEL_PLATES,
+  EXP2_GRID_ENERGY_LINE_HP,
+  EXP2_RESOURCE_STORAGE_CONSTRUCTION_REQUIRED,
+  EXP2_RESOURCE_STORAGE_COST_STEEL_PLATES,
+  EXP2_RESOURCE_STORAGE_HP,
   EXP1_AI_RESEARCH_CENTER_CONSTRUCTION_REQUIRED,
   EXP1_AI_RESEARCH_CENTER_COST_IRON_ORE,
   EXP1_AI_RESEARCH_CENTER_HP,
@@ -54,7 +60,10 @@ type ActiveBuildingConfig = {
   constructionRequired: number;
   sightRange: number;
   extraFields: Partial<Building>;
-  requiredResearch?: "research.metalProcessing1" | "research.energyBuffer1";
+  requiredResearch?:
+    | "research.metalProcessing1"
+    | "research.energyBuffer1"
+    | "research.transportLogistics1";
 };
 
 export const ACTIVE_BUILDING_CONFIGS: Record<ActiveBuildableType, ActiveBuildingConfig> = {
@@ -98,7 +107,43 @@ export const ACTIVE_BUILDING_CONFIGS: Record<ActiveBuildableType, ActiveBuilding
     extraFields: { storedEnergy: 0 },
     requiredResearch: "research.energyBuffer1",
   },
+  // Expansion 2 (docs/02-mvp/expansion-2-scope.md):
+  resourceStorage: {
+    cost: { steelPlates: EXP2_RESOURCE_STORAGE_COST_STEEL_PLATES },
+    hp: EXP2_RESOURCE_STORAGE_HP,
+    constructionRequired: EXP2_RESOURCE_STORAGE_CONSTRUCTION_REQUIRED,
+    sightRange: 1,
+    extraFields: { inventory: { storage: {}, totalCapacity: 100 } },
+    requiredResearch: "research.transportLogistics1",
+  },
+  gridEnergyLine: {
+    cost: { steelPlates: EXP2_GRID_ENERGY_LINE_COST_STEEL_PLATES },
+    hp: EXP2_GRID_ENERGY_LINE_HP,
+    constructionRequired: EXP2_GRID_ENERGY_LINE_CONSTRUCTION_REQUIRED,
+    sightRange: 0,
+    extraFields: {},
+    requiredResearch: "research.transportLogistics1",
+  },
 };
+
+// Expansion 2: Energienetz-Elemente fuer die Gridline-Platzierung.
+const GRID_NETWORK_TYPES = new Set([
+  "solarCollector",
+  "energyStorage",
+  "robotFactory",
+  "steelworks",
+  "aiResearchCenter",
+  "gridEnergyLine",
+]);
+
+function isAdjacentToGridNetwork(state: GameState, coord: FieldCoord): boolean {
+  return state.buildings.some(
+    (building) =>
+      building.status !== "destroyed" &&
+      GRID_NETWORK_TYPES.has(building.type) &&
+      Math.abs(building.x - coord.x) + Math.abs(building.y - coord.y) === 1,
+  );
+}
 
 export function isActiveBuildableType(value: string): value is ActiveBuildableType {
   return value in ACTIVE_BUILDING_CONFIGS;
@@ -241,6 +286,9 @@ export function selectNewConstructionSite(
     for (const field of row) {
       const coord = { x: field.x, y: field.y };
       if (!isValidBuildSite(state, robot, coord)) {
+        continue;
+      }
+      if (buildingType === "gridEnergyLine" && !isAdjacentToGridNetwork(state, coord)) {
         continue;
       }
       const reach = bestBuildFrom(state, robot, coord);
@@ -445,11 +493,14 @@ export function planBuildBuilding(
   }
 
   // Fall A: neue Baustelle.
-  const activeSameType = state.buildings.some(
-    (building) => building.type === buildingType && building.status === "active",
-  );
-  if (activeSameType) {
-    return { type: "notExecutable", reason: "noValidBuildSite" };
+  // Gridlines duerfen mehrfach gebaut werden (Expansion 2).
+  if (buildingType !== "gridEnergyLine") {
+    const activeSameType = state.buildings.some(
+      (building) => building.type === buildingType && building.status === "active",
+    );
+    if (activeSameType) {
+      return { type: "notExecutable", reason: "noValidBuildSite" };
+    }
   }
 
   if (buildingType === "robotFactory") {
