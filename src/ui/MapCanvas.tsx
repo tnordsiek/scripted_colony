@@ -2,7 +2,7 @@
 // docs/05-assets/asset-fallbacks.md und docs/04-systems/ui-components-contract.md.
 import { useEffect, useRef, useState } from "react";
 import { resolveAsset } from "../sim/assets";
-import type { GameState, PlayerCommand } from "../sim/types";
+import type { AssetKey, GameState, PlayerCommand } from "../sim/types";
 import { MapTileTooltip, type TooltipInfo } from "./MapTileTooltip";
 
 const TILE = 48;
@@ -85,23 +85,49 @@ export function MapCanvas({ state, sendCommand }: MapCanvasProps) {
       }
     }
 
+    const assetKeys: Record<string, AssetKey> = {
+      solarCollector: "building.solarCollector",
+      robotFactory: "building.robotFactory",
+      aiResearchCenter: "building.aiResearchCenter",
+      steelworks: "building.steelworks",
+      energyStorage: "building.energyStorage",
+      resourceStorage: "building.resourceStorage",
+      gridEnergyLine: "building.gridEnergyLine",
+    };
+    const letters: Record<string, string> = {
+      solarCollector: "S",
+      robotFactory: "F",
+      aiResearchCenter: "Z",
+      steelworks: "W",
+      energyStorage: "E",
+      resourceStorage: "R",
+      gridEnergyLine: "",
+    };
+
     // Layer 3: Gebaeude (statische Form auch auf discovered sichtbar).
     for (const building of state.buildings) {
       const field = state.map[building.y][building.x];
       if (field.visibility === "unknown") {
         continue;
       }
-      const assetKey =
-        building.type === "solarCollector"
-          ? "building.solarCollector"
-          : building.type === "robotFactory"
-            ? "building.robotFactory"
-            : building.type === "aiResearchCenter"
-              ? "building.aiResearchCenter"
-              : building.type === "steelworks"
-                ? "building.steelworks"
-                : "building.energyStorage";
-      const color = resolveAsset(assetKey).source ?? "#888";
+      const color =
+        resolveAsset(assetKeys[building.type] ?? "building.solarCollector").source ??
+        "#888";
+
+      // Gridline ist begehbar: als schmale Energieleiste zeichnen, damit Roboter
+      // darauf sichtbar bleiben und das Feld nicht wie ein blockierendes Gebaeude wirkt.
+      if (building.type === "gridEnergyLine") {
+        ctx.fillStyle = color;
+        const barInset = TILE * 0.32;
+        ctx.fillRect(
+          building.x * TILE + TILE * 0.1,
+          building.y * TILE + barInset,
+          TILE * 0.8,
+          TILE - barInset * 2,
+        );
+        continue;
+      }
+
       ctx.fillStyle = color;
       const inset = TILE * 0.12;
       ctx.fillRect(
@@ -114,13 +140,6 @@ export function MapCanvas({ state, sendCommand }: MapCanvasProps) {
       ctx.font = "bold 16px system-ui";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      const letters: Record<string, string> = {
-        solarCollector: "S",
-        robotFactory: "F",
-        aiResearchCenter: "Z",
-        steelworks: "W",
-        energyStorage: "E",
-      };
       ctx.fillText(
         letters[building.type] ?? "?",
         building.x * TILE + TILE / 2,
@@ -153,7 +172,11 @@ export function MapCanvas({ state, sendCommand }: MapCanvasProps) {
         continue;
       }
       const assetKey =
-        robot.type === "starterRobot" ? "robot.starterRobot" : "robot.ironMiner";
+        robot.type === "starterRobot"
+          ? "robot.starterRobot"
+          : robot.type === "transportRobot"
+            ? "robot.transportRobot"
+            : "robot.ironMiner";
       ctx.fillStyle = resolveAsset(assetKey).source ?? "#3f7fd1";
       ctx.beginPath();
       ctx.arc(

@@ -25,6 +25,26 @@
 - README.md, AGENTS.md, MANIFEST.md, Leitlinie und Berichte auf v112; v111-Berichte
   nach docs/archive verschoben.
 - Keine MVP- oder Expansion-1-Regel geaendert; alle Erweiterungen sind additiv.
+- Nachtrag (waehrend der Implementierung von Stufe B/C/D ergaenzt):
+  - `canonical-data-model.md`: ActionId-Union um `action.logistics` erweitert
+    (die Logistik-Ausfuehrung ist eine aktive ActionDefinition).
+  - Neues Feld `Building.producedSteelPlates` als Lebenszeit-Zaehler der
+    Stahlproduktion; der Steel-Counter nutzt nicht mehr `inventory.output`, damit
+    das Output-Inventar echte Fracht fuehren kann. `SteelProductionTask.source`
+    ("cargo" | "inventory") unterscheidet manuellen Cargo-Weg und Auto-Modus.
+  - Blockierte MaterialRequests werden zu Beginn von Pipeline-Schritt 3d neu
+    bewertet (Quelle wird neu gebunden, `from` zurueckgesetzt) — verhindert das
+    dauerhafte Haengenbleiben eines einmal blockierten Requests.
+  - LogisticsTask weicht stehenden Robotern aus (Pfad-Neuberechnung mit anderen
+    Robotern als Hindernis), statt nach drei Ticks abzubrechen; getragene Fracht
+    bleibt bei Blockade nach dem Pickup im Transporter-Cargo (keine Teillieferung,
+    kein Verlust).
+  - Spawn-Stack-Prioritaet in `expansion-2-scope.md` praezisiert: `template.rechargeAtGrid`
+    steht bei Iron Miner und Transporter ganz oben (Notfall-Laden preemptet Arbeit,
+    feuert nur bei Batterie <= 20). Der Iron-Miner-Stack enthaelt zusaetzlich
+    `template.exploreNearby`, damit der Miner nach Erschoepfung des angrenzenden
+    Ores neue Vorkommen ansteuert. Beide Regeln sind Learnings aus dem
+    3000-Tick-Langlauf EXP2-E2E-003 (ohne sie stagnierte die Kette).
 
 
 ## v111 - Expansion 1 definiert (Forschung + Tier-2-Einstieg)

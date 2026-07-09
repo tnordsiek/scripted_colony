@@ -4,6 +4,7 @@ import type { GameState, PlayerCommand } from "../sim/types";
 import { BottomControlBar } from "./BottomControlBar";
 import { DiagnosticsPanel } from "./DiagnosticsPanel";
 import { EventLogPanel } from "./EventLogPanel";
+import { LogisticsPanel } from "./LogisticsPanel";
 import { MapCanvas } from "./MapCanvas";
 import { ProgramEditorPanel } from "./ProgramEditorPanel";
 import { loadUiSettings, saveUiSettings } from "./persistence";
@@ -63,6 +64,7 @@ export function GameLayout({ state, sendCommand }: GameLayoutProps) {
         </div>
         <div className="game-right">
           <ScoreGoalPanel state={state} />
+          <LogisticsPanel state={state} />
           <SelectionPanel
             state={state}
             sendCommand={sendCommand}

@@ -23,6 +23,16 @@ const LIBRARY_TEMPLATES: Array<{ id: ProgramTemplateId; label: string; hint: str
     label: "Energiespeicher bauen",
     hint: "4 Steel Plates, braucht Energiepuffer I",
   },
+  {
+    id: "template.buildResourceStorage",
+    label: "Ressourcenspeicher bauen",
+    hint: "3 Steel Plates, braucht Transportlogistik I",
+  },
+  {
+    id: "template.buildGridEnergyLine",
+    label: "Grid Energy Line bauen",
+    hint: "1 Steel Plate, braucht Transportlogistik I",
+  },
 ];
 
 type TemplateLibraryProps = {

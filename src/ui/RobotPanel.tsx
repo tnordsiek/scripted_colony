@@ -39,6 +39,9 @@ export function RobotPanel({
         <li>
           Cargo: {cargoUsed}/{robot.cargo.capacity}
           {robot.cargo.used.ironOre ? ` (Iron Ore: ${robot.cargo.used.ironOre})` : ""}
+          {robot.cargo.used.steelPlates
+            ? ` (Steel Plates: ${robot.cargo.used.steelPlates})`
+            : ""}
         </li>
         <li>
           Position: [{robot.x}, {robot.y}]

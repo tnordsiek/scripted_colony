@@ -334,6 +334,34 @@ select {
   margin-top: 6px;
 }
 
+.production-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.logistics-panel .logistics-empty {
+  font-size: 12px;
+  color: #9a8f78;
+}
+
+.logistics-entry {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.logistics-type {
+  color: #f2d98c;
+}
+
+.logistics-resources {
+  color: #cfc4ad;
+}
+
+.logistics-entry .status-badge {
+  margin-left: 6px;
+}
+
 .diagnostics-content {
   margin-top: 8px;
   font-size: 12px;

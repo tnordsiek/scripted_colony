@@ -51,12 +51,13 @@ Objektiver Fortschritt: `npm test -- --run` (107 Tests, alle gruen).
 | A | Doku-Inkrement v112 (expansion-2-scope, kanonische Deltas, Testmatrix EXP2) | fertig |
 | B | Sim (logistics.ts, charging, Gridline, Inventare, Transporter, Miner aktiv) | fertig |
 | C | Tests inkl. EXP2-E2E (vollautomatische Kette, Determinismus, Livelock-Waechter) | fertig — 157 Tests gruen inkl. EXP2-E2E-003 (3000-Tick-Langlauf) |
-| D | UI (LogisticsPanel, Inventare, Canvas), Preview-Verifikation, Deploy | offen — naechster Schritt |
+| D | UI (LogisticsPanel, Inventare, Canvas), Preview-Verifikation, Deploy | fertig — live gepusht, Preview verifiziert |
 
-Naechster Schritt: UI-Erweiterungen (LogisticsPanel, Inventar-Anzeigen in
-BuildingPanel, Transporter-Produktions-Button, TemplateLibrary +2 Eintraege,
-MapCanvas Gridline/Speicher/Transporter), Preview-Verifikation, CHANGELOG-Nachtrag,
-Commit + Push.
+Expansion 2 vollstaendig: 157 Tests gruen, UI (LogisticsPanel, Stahlwerk-/Speicher-
+Inventare, Transporter-Produktions-Button, TemplateLibrary +2, MapCanvas
+Gridline/Speicher/Transporter) live verifiziert (Preview: Kette rendert, Requests
+erscheinen, Auto-Modus/Inventare korrekt), CHANGELOG-Nachtrag ergaenzt, gepusht
+(deployt automatisch nach https://tnordsiek.github.io/scripted_colony/).
 
 Waehrend Stufe 4 gefundene und behobene Design-Luecken (Doku + Code):
 Einschluss-Schutz und Commitment-Regel der Bauplatzwahl

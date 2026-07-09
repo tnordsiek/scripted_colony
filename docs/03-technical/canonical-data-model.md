@@ -981,6 +981,7 @@ NOT Gebäude oder Baustelle existiert X wird als NOT sensor.buildingExists mit B
 ```ts
 type ActionId =
   | "action.charge"
+  | "action.logistics"
   | "action.scoutNearby"
   | "action.mineResource"
   | "action.buildBuilding"
