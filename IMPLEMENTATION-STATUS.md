@@ -49,17 +49,28 @@ Objektiver Fortschritt: `npm test -- --run` (107 Tests, alle gruen).
 | # | Paket | Status |
 |---|---|---|
 | A | Doku-Inkrement v112 (expansion-2-scope, kanonische Deltas, Testmatrix EXP2) | fertig |
-| B | Sim (logistics.ts, charging, Gridline, Inventare, Transporter, Miner aktiv) | offen — naechster Schritt |
-| C | Tests inkl. EXP2-E2E (vollautomatische Kette, Determinismus, Livelock-Waechter) | offen |
-| D | UI (LogisticsPanel, Inventare, Canvas), Preview-Verifikation, Deploy | offen |
+| B | Sim (logistics.ts, charging, Gridline, Inventare, Transporter, Miner aktiv) | fertig |
+| C | Tests inkl. EXP2-E2E (vollautomatische Kette, Determinismus, Livelock-Waechter) | fertig — 157 Tests gruen inkl. EXP2-E2E-003 (3000-Tick-Langlauf) |
+| D | UI (LogisticsPanel, Inventare, Canvas), Preview-Verifikation, Deploy | offen — naechster Schritt |
 
-Naechster Schritt: src/sim/logistics.ts + tasks/logisticsTask.ts + tasks/chargingTask.ts
-+ actions/charge.ts nach docs/02-mvp/expansion-2-scope.md; danach EXP2-Tests.
+Naechster Schritt: UI-Erweiterungen (LogisticsPanel, Inventar-Anzeigen in
+BuildingPanel, Transporter-Produktions-Button, TemplateLibrary +2 Eintraege,
+MapCanvas Gridline/Speicher/Transporter), Preview-Verifikation, CHANGELOG-Nachtrag,
+Commit + Push.
 
 Waehrend Stufe 4 gefundene und behobene Design-Luecken (Doku + Code):
 Einschluss-Schutz und Commitment-Regel der Bauplatzwahl
 (pathfinding-and-map-generation.md), Template-Einfuegeposition ueber der
 Erkundung (expansion-1-scope.md).
+
+Waehrend Expansion 2 (Stufe B/C) gefundene und behobene Design-Luecken (Doku + Code):
+- Blockierte MaterialRequests wurden nie neu bewertet (from=undefined blieb haengen)
+  -> processLogisticsTick bindet Quellen blockierter Requests am Tick-Anfang neu.
+- Transporter blockierte an geparktem Roboter (3-Tick-Abbruchschleife)
+  -> Ausweich-Pfad in stepAlongPath (stehende Roboter als Hindernis).
+- Spawn-Stack-Prioritaet: rechargeAtGrid stand unten -> Miner mint sich leer und
+  strandet ausserhalb der Ladezone. Notfall-Laden jetzt an der Stack-Spitze
+  (feuert nur bei Batterie <= 20; Langlauf-Learning EXP2-E2E-003).
 
 Expansion-1-Spezifikation: docs/02-mvp/expansion-1-scope.md (Quelleigentuemer),
 EXP1-Konstanten in mvp-constants.md, EXP1-Tests in mvp-test-matrix.md.

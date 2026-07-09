@@ -606,26 +606,37 @@ export function createStarterProgramStack(): ProgramInstance[] {
 // (docs/02-mvp/expansion-2-scope.md).
 export function createIronMinerSpawnStack(robotId: string): ProgramInstance[] {
   return [
+    // Notfall-Laden zuerst (hoechste Prioritaet): steht das Laden unten, mint
+    // der Miner sich leer und strandet ausserhalb der Ladezone
+    // (Langlauf-Learning EXP2-E2E-003). rechargeAtGrid feuert nur bei
+    // Batterie <= 20, laesst also im Normalbetrieb Mining/Erkundung durch.
+    createProgramInstanceFromTemplate(
+      "template.rechargeAtGrid",
+      `program.${robotId}.rechargeAtGrid`,
+    ),
     createProgramInstanceFromTemplate(
       "template.mineIronOre",
       `program.${robotId}.mineIronOre`,
     ),
+    // Erkundung noetig, damit der Miner neue Vorkommen ansteuert
+    // (Langlauf-Learning: ohne Erkundung verhungert die Kette).
     createProgramInstanceFromTemplate(
-      "template.rechargeAtGrid",
-      `program.${robotId}.rechargeAtGrid`,
+      "template.exploreNearby",
+      `program.${robotId}.exploreNearby`,
     ),
   ];
 }
 
 export function createTransportRobotSpawnStack(robotId: string): ProgramInstance[] {
   return [
-    createProgramInstanceFromTemplate(
-      "template.logistics",
-      `program.${robotId}.logistics`,
-    ),
+    // Notfall-Laden zuerst (hoechste Prioritaet, siehe Miner-Stack).
     createProgramInstanceFromTemplate(
       "template.rechargeAtGrid",
       `program.${robotId}.rechargeAtGrid`,
+    ),
+    createProgramInstanceFromTemplate(
+      "template.logistics",
+      `program.${robotId}.logistics`,
     ),
   ];
 }

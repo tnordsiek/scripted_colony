@@ -824,7 +824,7 @@ Regelquelle: `docs/02-mvp/expansion-2-scope.md`.
 | EXP2-CHG-004 | P0 | required | Ladenetz | Ladeverbraucher kommen nach Gebaeudeverbrauchern, Reihenfolge nach RobotId | `expansion-2-scope.md` |
 | EXP2-TRANS-001 | P0 | required | Produktion | startTransportRobotProduction zieht 4 Steel Plates aus Starter-Cargo; Timing-/Spawnregeln wie Iron Miner | `expansion-2-scope.md` |
 | EXP2-TRANS-002 | P0 | required | Produktion | Transporter spawnt mit Batterie 80/120, Cargo 30 und Stack logistics + rechargeAtGrid | `expansion-2-scope.md` |
-| EXP2-MINER-001 | P0 | required | Iron Miner | Neu gespawnte Iron Miner erhalten Stack mineIronOre + rechargeAtGrid und minen autonom | `expansion-2-scope.md` |
+| EXP2-MINER-001 | P0 | required | Iron Miner | Neu gespawnte Iron Miner erhalten Stack mineIronOre + exploreNearby + rechargeAtGrid und minen autonom | `expansion-2-scope.md` |
 | EXP2-INV-001 | P0 | required | Stahlwerk | Auto-Modus startet Verarbeitung bei input >= 2 und freiem Output; Ergebnis landet im output-Inventar | `expansion-2-scope.md` |
 | EXP2-REQ-001 | P0 | required | Requests | supplyBuildingInput entsteht bei Stahlwerk-Input < 2; Menge min(4, freie Kapazitaet) | `expansion-2-scope.md` |
 | EXP2-REQ-002 | P0 | required | Requests | clearBuildingOutput entsteht bei Stahlwerk-Output > 0 mit Ziel Speicher | `expansion-2-scope.md` |

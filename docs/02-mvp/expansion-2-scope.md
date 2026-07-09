@@ -124,9 +124,9 @@ Produktion (Scope-Abweichung: normale Roboterfabrik, Verbesserte Fabrik bleibt F
   Dauer: 20 Ticks, Leistungsbedarf: 50
   Gleiche Timing-/Spawn-/Blocked-Regeln wie die Iron-Miner-Produktion
   RobotId: robot.transportRobot.<seq3>
-Spawn-Stack:
-  1. template.logistics (locked-frei, enabled)
-  2. template.rechargeAtGrid
+Spawn-Stack (Reihenfolge = Prioritaet, Notfall-Laden zuerst):
+  1. template.rechargeAtGrid
+  2. template.logistics (locked-frei, enabled)
 AssetKey: robot.transportRobot
 ```
 
@@ -153,9 +153,15 @@ Row-Id-Muster: row.<robotKurzname>.rechargeAtGrid.main,
 ### 5. Iron Miner wird aktiv (goalOnly -> active)
 
 ```text
-Neu gespawnte Iron Miner erhalten den Spawn-Stack:
-  1. template.mineIronOre (Instanz program.<robotId>.mineIronOre)
-  2. template.rechargeAtGrid
+Neu gespawnte Iron Miner erhalten den Spawn-Stack (Reihenfolge = Prioritaet,
+oberstes Programm zuerst; Notfall-Laden MUSS oben stehen, sonst mint sich der
+Miner leer und strandet ausserhalb der Ladezone — Langlauf-Learning EXP2-E2E-003):
+  1. template.rechargeAtGrid (feuert nur bei Batterie <= 20, laesst im
+     Normalbetrieb Mining/Erkundung durch)
+  2. template.mineIronOre (Instanz program.<robotId>.mineIronOre)
+  3. template.exploreNearby (Instanz program.<robotId>.exploreNearby;
+     noetig, damit der Miner nach Erschoepfung des angrenzenden Ores neue
+     Vorkommen ansteuert — ohne Erkundung verhungert die Kette)
 Der Iron Miner mined autonom, bis sein Cargo voll ist; die Logistik holt das Ore ab
 (moveToStorage). Score-/Zielregeln aendern sich nicht: der erste erfolgreiche Spawn
 bleibt das MVP-Ziel, weitere Spawns geben +100 wie bisher.

@@ -336,6 +336,33 @@ export function processLogisticsTick(state: GameState): LogisticsTickResult {
     inventoryRole: "storage",
   };
 
+  // Blockierte Requests neu bewerten (Quelle neu binden), bevor neue
+  // Requests entstehen und zugewiesen wird.
+  for (const request of state.materialRequests) {
+    if (request.status !== "blocked") {
+      continue;
+    }
+    const targetCoord = endpointCoord(state, request.to);
+    if (!targetCoord) {
+      request.status = "cancelled";
+      request.updatedTick = state.tick;
+      continue;
+    }
+    if (!request.from) {
+      const source = findSource(state, targetCoord, request.resources, new Set());
+      if (source) {
+        request.from = source;
+        request.status = "reserved";
+        request.blockedReason = undefined;
+        request.updatedTick = state.tick;
+      }
+    } else {
+      request.status = "reserved";
+      request.blockedReason = undefined;
+      request.updatedTick = state.tick;
+    }
+  }
+
   let sequence = 0;
 
   function createRequest(

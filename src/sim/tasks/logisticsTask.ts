@@ -117,6 +117,30 @@ function stepAlongPath(
   );
   if (blockedByRobot) {
     task.movementState.blockedByRobotTicks += 1;
+    // Ausweichen: Pfad neu planen, der stehende Roboter als Hindernis behandelt.
+    const passableAvoidingRobots = (field: Parameters<typeof isFieldPassableInState>[1]) =>
+      isFieldPassableInState(state, field) &&
+      !state.robots.some(
+        (other) => other.id !== robot.id && other.x === field.x && other.y === field.y,
+      );
+    const detour = bfsPath(
+      state.map,
+      { x: robot.x, y: robot.y },
+      destination,
+      passableAvoidingRobots,
+    );
+    if (detour !== null && detour.length > 0) {
+      task.path = detour;
+      task.movementState.blockedByRobotTicks = 0;
+      const detourNext = detour[0];
+      robot.x = detourNext.x;
+      robot.y = detourNext.y;
+      robot.battery -= MVP_MOVE_BATTERY_COST;
+      task.path.shift();
+      return robot.x === destination.x && robot.y === destination.y
+        ? "arrived"
+        : "moving";
+    }
     if (task.movementState.blockedByRobotTicks >= 3) {
       return "failed";
     }
