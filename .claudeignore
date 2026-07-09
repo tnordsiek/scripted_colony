@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build artifacts and tool caches
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Archived docs are not active rule sources in this repo
+docs/archive/
+
+# Repo/tool internals
+.git/
+.agents/
+.claude/settings.local.json
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.tmp
+*.bak
+tmp/
+temp/

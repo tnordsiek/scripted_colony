@@ -1,11 +1,40 @@
 # Roboter-Logikspiel
 
+## Game
+
+Scripted Colony is a browser-based automation and survival strategy prototype
+about building up a robotic outpost through indirect control. Instead of
+micromanaging units directly, the player edits simple visual behavior templates
+and lets robots explore, mine, build, recharge, research, and transport
+resources on their own.
+
+The core appeal of the project is that control happens through program design:
+you shape robot behavior, priorities, and recovery logic, then watch the system
+execute those decisions autonomously. A playable version is available on GitHub
+Pages: https://tnordsiek.github.io/scripted_colony/
+
+## Motivation
+
+"This is a small educational and hobby project that combines the enjoyable and interesting with the practical."
+
+The goal is to develop a self-created game idea into a concept that is as
+thought-through as possible, while also shaping it in a way that allows a first
+playable prototype to be built quickly and iterated on in practice.
+
+## Technology
+
+The project is built with TypeScript, React, and Vite, with Vitest used for
+automated verification. This stack supports fast iteration on UI and gameplay
+logic, keeps the deterministic simulation manageable in a typed codebase, and
+fits the project's static browser deployment model via GitHub Pages.
+
 ## Aktueller Stand
 
 Dieses Paket ist Version v112. Es basiert auf v111 und definiert Expansion 2
-(Logistik + Ladenetz) in `docs/02-mvp/expansion-2-scope.md`. Zuvor: v111 definierte Expansion 1
-(Forschung + Tier-2-Einstieg). Das MVP ist vollstaendig implementiert (src/, tests/)
-und wird ueber GitHub Pages deployt; Wiedereinstieg siehe IMPLEMENTATION-STATUS.md.
+(Logistik + Ladenetz) in `docs/02-mvp/expansion-2-scope.md`. Zuvor definierte
+v111 Expansion 1 (Forschung + Tier-2-Einstieg). MVP, Expansion 1 und
+Expansion 2 sind implementiert; das Projekt wird ueber GitHub Pages deployt.
+Wiedereinstieg und Umsetzungsstand stehen in `IMPLEMENTATION-STATUS.md`.
 
 Kern von v112:
 
@@ -19,7 +48,7 @@ Datenmodell: ChargingTask + LogisticsTask aktiv, neue Commands/Events/AssetKeys
 Testmatrix um EXP2-Serie erweitert; v111 (Expansion 1) bleibt unveraendert gueltig
 ```
 
-Kurzregel:
+## Setup und Kurzregeln
 
 ```text
 Node.js Runtime: 22.x
@@ -42,82 +71,46 @@ MVP-Ziel:
 Der erste Iron Miner muss erfolgreich als Robot-Entity gespawnt worden sein.
 ```
 
-Nicht ausreichend fuer das MVP-Ziel:
-
-```text
-Produktionsauftrag akzeptiert
-Produktionskosten bezahlt
-ProductionTask fertig
-ProductionTask readyToSpawn
-ProductionTask spawnBlocked
-```
-
-## Kanonischer MVP-Stand
-
-```text
-Startposition: { x: 5, y: 5 }
-Startroboter: starterRobot, Batterie 100/100, Cargo leer
-Karte: 10x10, 0-basierte Koordinaten, map[y][x]
-Map-Regel: kein Ore im initial sichtbaren Bereich; mindestens ein erreichbares Ore-Feld in Distanz 4-6
-Aktive Ressource: Iron Ore
-Aktive Gebaeude: Solar Collector, Roboterfabrik
-Solar Collector: 50 Leistung
-Energie: globaler MVP-Power-Pool nur fuer ProductionTasks
-Externe Roboterladung: Future, nicht MVP-aktiv
-Stasis-Laden: einzige aktive MVP-Roboterladung
-Gebaeudesicht: active + enabled Gebaeude haben Sichtweite 2
-Tick-Pipeline: docs/03-technical/tick-pipeline.md ist kanonisch
-RobotTask: diskriminierte Union aus MovementTask, MiningTask, BuildingTask, StasisChargingTask
-Build-Modi: newConstruction und continueConstruction
-Build-Events: details.mode ist fuer Build-Target/Start/Completion verbindlich
-GameEventCode: kanonisch im Datenmodell definiert
-action.charge: Future/Advanced, keine aktive MVP-ActionDefinition
-Build-Blocked-Event: constructionAlreadyReserved -> action.build.blocked.constructionAlreadyReserved
-Event-Sequenz: pipelineStepOrder -> sourceOrder -> entitySortKey -> eventCodeOrder -> localSequence
-Event-ID-Muster: event.<tick6>.<seq3>.<code>
-Initial-Event: id event.initialLanding, code system.initialLanding
-Seeded RNG: FNV-1a 32-bit ueber UTF-8 + Mulberry32 nach docs/03-technical/seeded-rng.md
-mvp-default-Map: Referenzwerte in docs/03-technical/pathfinding-and-map-generation.md
-ProductionTask-Timing: Start in Tick N, erster Fortschritt oder Pauseeffekt fruehestens Tick N+1
-Quellenprioritaet: docs/00-documentation-guideline.md bestimmt Quelleigentuemer je Themenbereich
-Dateiverweise: relative Pfade muessen relativ zur verweisenden Markdown-Datei aufloesen
-Tooling: Node.js 22.x, npm, package-lock.json, npm ci
-Projekt-/Modulstruktur: docs/03-technical/implementation-module-structure.md ist kanonisch; abweichende Architekturvorschlaege sind nicht zu verwenden
-Event-/Reason-/Command-Rejection-Mapping: docs/03-technical/diagnostics-and-eventlog.md
-Markdown-/Codeblock-Hygiene: alle aktiven Markdown-Dateien haben geschlossene Codebloecke; Prosa steht ausserhalb von TypeScript-Codebloecken
-Generische Command-Ablehnung: debug.command.rejected; Ore-Mangel bei Produktion: production.ironMiner.blocked.notEnoughOre mit requiredOre/availableOre
-Initial-State-Quelle: docs/02-mvp/initial-game-state.md
-Assets: AssetRegistry partiell, FallbackAssetRegistry vollstaendig, resolveAsset/render-sicher, resolveAssetDetailed/diagnostisch; Fog-Assets: fog.unknown und fog.discovered
-Batterie-Einheit: absolute Punkte, batteryMax = 100 fuer alle MVP-Robotertypen; kanonisch in docs/04-systems/units-and-energy.md
-Score-Werte: +1 Ore, +25 Solar Collector, +50 Roboterfabrik, +100 Spawn, +200 Zielbonus; Regelquelle docs/04-systems/scoring-and-win-conditions.md
-Tie-Breaks: seeded deterministic nach docs/03-technical/seeded-rng.md (scoutTarget, mineAdjacentOre, buildSite, spawnSite)
-Expansion-1-Umfang: docs/02-mvp/expansion-1-scope.md ist kanonisch
-```
+Fuer die konkrete Umsetzung gelten die aktiven Fach- und Technikdokumente in
+`docs/**`. Insbesondere liegen Scope, Datenmodell, Tick-Regeln,
+Simulationsregeln, Systemverhalten und Quellenprioritaet in den dort benannten
+Quelleigentuemer-Dokumenten. `README.md` dient nur als Einstieg und
+Zusammenfassung.
 
 ## Wichtige Einstiegspunkte
 
 ```text
 AGENTS.md
-MANIFEST.md
+IMPLEMENTATION-STATUS.md
 docs/00-documentation-guideline.md
 docs/02-mvp/mvp-and-tech-stack.md
-docs/02-mvp/implementation-plan.md
+docs/02-mvp/expansion-1-scope.md
+docs/02-mvp/expansion-2-scope.md
 docs/02-mvp/acceptance-criteria.md
 docs/02-mvp/mvp-test-matrix.md
 docs/02-mvp/initial-game-state.md
 docs/03-technical/canonical-data-model.md
 docs/03-technical/tick-pipeline.md
 docs/03-technical/simulation-rules.md
+docs/03-technical/implementation-module-structure.md
 docs/03-technical/pathfinding-and-map-generation.md
 docs/03-technical/seeded-rng.md
 docs/03-technical/diagnostics-and-eventlog.md
 docs/05-assets/asset-fallbacks.md
 ```
 
-## Archivregel
+## Archiv- und Quellenhinweis
 
 ```text
 docs/archive/** ist nur Historie.
 CHANGELOG.md ist nur Historie und Versionsnotiz.
 Aktive Regeln stehen in docs/00-documentation-guideline.md, docs/02-mvp/**, docs/03-technical/**, docs/04-systems/**, docs/05-assets/** und docs/06-reference/**.
 ```
+
+## Development
+
+Code powered by Codex & Claude
+
+Graphics powered by Nano Banana
+
+Concept and AI Direction by fnord GAMES (2026)
